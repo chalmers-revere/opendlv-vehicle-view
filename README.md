@@ -41,7 +41,7 @@ docker run --rm --net=host -p 8081:8081 chalmersrevere/opendlv-vehicle-view-amd6
 Now, simply point your web-browser to the IP address and port 8081 where you
 started this microservice to see any currently exchanged messages:
 
-![screenshot from vehicle view](https://raw.githubusercontent.com/chalmers-revere/opendlv-vehicle-view/master/vehicle-view.png)
+![screenshot from vehicle view](https://raw.githubusercontent.com/chalmers-revere/opendlv-vehicle-view/master/vehicle-view.gif)
 
 
 ## License
