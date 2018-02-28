@@ -455,7 +455,10 @@ var map = new maptalks.Map("map",{
                 }
 
                 // Trigger update
-                particles_pointcloud.geometry.attributes.position.needsUpdate = true;
+                if ( (16 == entriesPerAzimuth)  ||
+                     (9 == entriesPerAzimuth) ) {
+                    particles_pointcloud.geometry.attributes.position.needsUpdate = true;
+                }
             }
         };
 
