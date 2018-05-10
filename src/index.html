@@ -438,7 +438,7 @@ var map = new maptalks.Map("map",{
 
                         var byte0 = distances.charCodeAt(index++);
                         var byte1 = distances.charCodeAt(index++);
-                        var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) ) / 500.0;
+                        var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) ) / 100.0;
                         if (distance > 1.0) {
                             var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
                             var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
