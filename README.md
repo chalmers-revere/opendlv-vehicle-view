@@ -22,7 +22,7 @@ No dependencies! The following dependencies are part of the source distribution:
 * [three 88](https://cdnjs.cloudflare.com/ajax/libs/three.js/88/three.min.js)
 * [gauge 2.1.4](https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.4/all/gauge.min.js)
 * [smoothie 1.32.0](https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.32.0/smoothie.min.js)
-* [libcluon.js 0.0.90](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+* [libcluon.js 0.0.97](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 
 ## Usage
