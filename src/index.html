@@ -206,7 +206,7 @@
 
     // point_cloud
     var geometry_pointcloud = new THREE.BufferGeometry();
-    var MAX_POINTS = 63000;
+    var MAX_POINTS = 63000 * 3 /* 3 = x,y,z*/;
     var positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
     positions.fill(0);
     geometry_pointcloud.addAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -373,7 +373,7 @@ var map = new maptalks.Map("map",{
 
         var oldTimeStamp = 0;
         ws.onmessage = function(evt) {
-            <!--This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification. -->
+            // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
             var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
 
             if (data.dataType > 0) {
@@ -455,10 +455,7 @@ var map = new maptalks.Map("map",{
                 }
 
                 // Trigger update
-                if ( (16 == entriesPerAzimuth)  ||
-                     (9 == entriesPerAzimuth) ) {
-                    particles_pointcloud.geometry.attributes.position.needsUpdate = true;
-                }
+                particles_pointcloud.geometry.attributes.position.needsUpdate = true;
             }
         };
 
