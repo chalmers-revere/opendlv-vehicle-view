@@ -217,9 +217,6 @@
         var positions_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // 3 vertices per point
         positions_vlp16.fill(0);
         geometry_pointcloud_vlp16.addAttribute('position', new THREE.BufferAttribute(positions_vlp16, 3));
-//        var material_pointcloud_vlp16 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
-//        var particles_pointcloud_vlp16 = new THREE.Points( geometry_pointcloud_vlp16, material_pointcloud_vlp16 );
-//        scene.add( particles_pointcloud_vlp16 );
 
         var colors_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // RGB per point
         colors_vlp16.fill(0);
@@ -231,38 +228,67 @@
 
     // Point Cloud for HDL32e_12 layers:
     {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
         var geometry_pointcloud_hdl32e_12 = new THREE.BufferGeometry();
         var MAX_POINTS_hdl32e_12 = 63000;
         var positions_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // 3 vertices per point
         positions_hdl32e_12.fill(0);
         geometry_pointcloud_hdl32e_12.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_12, 3));
 
-        var material_pointcloud_hdl32e_12 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
-        var particles_pointcloud_hdl32e_12 = new THREE.Points( geometry_pointcloud_hdl32e_12, material_pointcloud_hdl32e_12 );
+        var colors_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // RGB per point
+        colors_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_12, 3));
+
+        var particles_pointcloud_hdl32e_12 = new THREE.Points( geometry_pointcloud_hdl32e_12, pointMaterial );
         scene.add( particles_pointcloud_hdl32e_12 );
     }
 
     // Point Cloud for HDL32e_11 layers:
     {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
         var geometry_pointcloud_hdl32e_11 = new THREE.BufferGeometry();
         var MAX_POINTS_hdl32e_11 = 63000;
         var positions_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // 3 vertices per point
         positions_hdl32e_11.fill(0);
         geometry_pointcloud_hdl32e_11.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_11, 3));
-        var material_pointcloud_hdl32e_11 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
-        var particles_pointcloud_hdl32e_11 = new THREE.Points( geometry_pointcloud_hdl32e_11, material_pointcloud_hdl32e_11 );
+
+        var colors_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // RGB per point
+        colors_hdl32e_11.fill(0);
+        geometry_pointcloud_hdl32e_11.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_11, 3));
+
+        var particles_pointcloud_hdl32e_11 = new THREE.Points( geometry_pointcloud_hdl32e_11, pointMaterial );
         scene.add( particles_pointcloud_hdl32e_11 );
     }
 
     // Point Cloud for HDL32e_9 layers:
     {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
         var geometry_pointcloud_hdl32e_9 = new THREE.BufferGeometry();
         var MAX_POINTS_hdl32e_9 = 63000;
         var positions_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // 3 vertices per point
         positions_hdl32e_9.fill(0);
         geometry_pointcloud_hdl32e_9.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_9, 3));
-        var material_pointcloud_hdl32e_9 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
-        var particles_pointcloud_hdl32e_9 = new THREE.Points( geometry_pointcloud_hdl32e_9, material_pointcloud_hdl32e_9 );
+
+        var colors_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // RGB per point
+        colors_hdl32e_9.fill(0);
+        geometry_pointcloud_hdl32e_9.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_9, 3));
+
+        var particles_pointcloud_hdl32e_9 = new THREE.Points( geometry_pointcloud_hdl32e_9, pointMaterial );
         scene.add( particles_pointcloud_hdl32e_9 );
     }
 
@@ -454,8 +480,6 @@ var map = new maptalks.Map("map",{
                 var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
 
                 var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
-                var intensityPlacement = data.opendlv_proxy_PointCloudReading.intensityPlacement;
-
                 var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
                 var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
                 var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
@@ -467,8 +491,13 @@ var map = new maptalks.Map("map",{
                 var GL_colors_vlp16 = particles_pointcloud_vlp16.geometry.attributes.color.array;
 
                 var GL_positions_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+                var GL_colors_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+
                 var GL_positions_hdl32e_11 = particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
+                var GL_colors_hdl32e_11 = particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+
                 var GL_positions_hdl32e_9 = particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
+                var GL_colors_hdl32e_9 = particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
 
                 // VLP16 sends 16 layers,
                 if (16 == entriesPerAzimuth) {
@@ -509,7 +538,6 @@ var map = new maptalks.Map("map",{
 
                         var byte0 = distances.charCodeAt(index++);
                         var byte1 = distances.charCodeAt(index++);
-//                        var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) ) / 100.0;
                         var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
 
                         var r = 0;
@@ -517,9 +545,8 @@ var map = new maptalks.Map("map",{
                         var b = 1.0;
 
                         // Extract intensity.
-//                        if ( (0 < numberOfBitsForIntensity) && (1 == intensityPlacement) ) {
                         if ( (0 < numberOfBitsForIntensity) ) {
-                            var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16
+                            var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
                             var extractedIntensity = distance & MASK;
                             extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
                             var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
@@ -529,7 +556,7 @@ var map = new maptalks.Map("map",{
                                 intensity = 0.5;
                             }
 
-                            //Four color levels: blue, green, yellow, red from low intensity to high intensity
+                            // Four color levels: blue, green, yellow, red from low intensity to high intensity
                             if (intensity < 0.25 + 1e-7) {
                                 r = 0;
                                 g = 0.5 + intensity * 2.0;
@@ -548,10 +575,10 @@ var map = new maptalks.Map("map",{
                                 b = 0;
                             }
 
+                            // Remove intensity from distance.
                             distance = distance & (0xFFFF >> numberOfBitsForIntensity);
                         }
 
-                        // TODO: Double check the distance encoding.
                         distance /= 100.0;
 
                         if (distance > 1.0) {
@@ -561,12 +588,6 @@ var map = new maptalks.Map("map",{
                             var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
 
                             if (16 == entriesPerAzimuth) {
-//                                if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
-//                                    GL_positions_vlp16[GL_position_index_vlp16++] = x;
-//                                    GL_positions_vlp16[GL_position_index_vlp16++] = z;
-//                                    GL_positions_vlp16[GL_position_index_vlp16++] = -y;
-//                                }
-
                                 if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
                                     GL_positions_vlp16[GL_position_index_vlp16] = x;
                                     GL_colors_vlp16[GL_position_index_vlp16] = r;
@@ -584,23 +605,47 @@ var map = new maptalks.Map("map",{
                             }
                             else if (12 == entriesPerAzimuth) {
                                 if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = x;
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = z;
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = -y;
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                                    GL_position_index_hdl32e_12++;
                                 }
                             }
                             else if (11 == entriesPerAzimuth) {
                                 if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
-                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11++] = x;
-                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11++] = z;
-                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11++] = -y;
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
+                                    GL_position_index_hdl32e_11++;
                                 }
                             }
                             else if (9 == entriesPerAzimuth) {
                                 if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
-                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9++] = x;
-                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9++] = z;
-                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9++] = -y;
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
+                                    GL_position_index_hdl32e_9++;
                                 }
                             }
                         }
@@ -615,12 +660,15 @@ var map = new maptalks.Map("map",{
                 }
                 else if (12 == entriesPerAzimuth) {
                     particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
                 }
                 else if (11 == entriesPerAzimuth) {
                     particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
                 }
                 else if (9 == entriesPerAzimuth) {
                     particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
                 }
             }
         };
