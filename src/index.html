@@ -519,8 +519,9 @@ var map = new maptalks.Map("map",{
                         // Extract intensity.
 //                        if ( (0 < numberOfBitsForIntensity) && (1 == intensityPlacement) ) {
                         if ( (0 < numberOfBitsForIntensity) ) {
-                            var MASK = ((~(0xFFFF << numberOfBitsForIntensity))&0xFFFF); // restrict to uint16
+                            var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16
                             var extractedIntensity = distance & MASK;
+                            extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
                             var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
                             var intensity = extractedIntensity / intensityMaxValue;
 
@@ -547,7 +548,7 @@ var map = new maptalks.Map("map",{
                                 b = 0;
                             }
 
-                            distance -= extractedIntensity;
+                            distance = distance & (0xFFFF >> numberOfBitsForIntensity);
                         }
 
                         // TODO: Double check the distance encoding.
