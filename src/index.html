@@ -218,13 +218,25 @@
 
     // Point Cloud for HDL32e_12 layers:
     {
+
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
         var geometry_pointcloud_hdl32e_12 = new THREE.BufferGeometry();
         var MAX_POINTS_hdl32e_12 = 63000;
         var positions_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // 3 vertices per point
         positions_hdl32e_12.fill(0);
         geometry_pointcloud_hdl32e_12.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_12, 3));
-        var material_pointcloud_hdl32e_12 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
-        var particles_pointcloud_hdl32e_12 = new THREE.Points( geometry_pointcloud_hdl32e_12, material_pointcloud_hdl32e_12 );
+
+        var colors_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // RGB per point
+        colors_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_12, 3));
+
+//        var material_pointcloud_hdl32e_12 = new THREE.PointsMaterial( { color: 0x0000ff, size: 0.02 } );
+        var particles_pointcloud_hdl32e_12 = new THREE.Points( geometry_pointcloud_hdl32e_12, pointMaterial );
         scene.add( particles_pointcloud_hdl32e_12 );
     }
 
@@ -448,6 +460,7 @@ var map = new maptalks.Map("map",{
 
                 var GL_positions_vlp16 = particles_pointcloud_vlp16.geometry.attributes.position.array;
                 var GL_positions_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+                var GL_colors_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
                 var GL_positions_hdl32e_11 = particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
                 var GL_positions_hdl32e_9 = particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
 
@@ -505,10 +518,21 @@ var map = new maptalks.Map("map",{
                                 }
                             }
                             else if (12 == entriesPerAzimuth) {
+                                var r = 1.0;
+                                var g = (160.0+(distance/80.0))/255.0;
+                                var b = 63.0/255.0;
                                 if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = x;
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = z;
-                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12++] = -y;
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                                    GL_position_index_hdl32e_12++;
                                 }
                             }
                             else if (11 == entriesPerAzimuth) {
@@ -536,6 +560,7 @@ var map = new maptalks.Map("map",{
                 }
                 else if (12 == entriesPerAzimuth) {
                     particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
                 }
                 else if (11 == entriesPerAzimuth) {
                     particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
