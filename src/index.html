@@ -547,7 +547,7 @@ var map = new maptalks.Map("map",{
                                 b = 0;
                             }
 
-                            distance = distance & MASK;
+                            distance = distance & ((0xFFFF << numberOfBitsForIntensity)&0xFFFF);
                         }
 
                         // TODO: Double check the distance encoding.
