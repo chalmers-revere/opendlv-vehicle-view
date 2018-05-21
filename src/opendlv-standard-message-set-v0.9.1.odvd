@@ -163,6 +163,8 @@ message opendlv.proxy.PointCloudReadingShared [id = 28] {
   uint32 width [id = 3];
   uint32 height [id = 4];
   uint8 numberOfComponentsPerPoint [id = 5];
+  int32 intensityPlacement [id = 6]; // 0 = use higher bits for intensity, 1 = use lower bits for intensity
+  int32 distanceEncoding [id = 7]; // 0 = distances are encoded as cm, 1 = distances are encoded as 2mm
 }
 
 // V2xReading?
