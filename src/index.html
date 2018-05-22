@@ -502,19 +502,23 @@ var map = new maptalks.Map("map",{
                 // VLP16 sends 16 layers,
                 if (16 == entriesPerAzimuth) {
                     GL_positions_vlp16.fill(0);
+                    GL_colors_vlp16.fill(0);
                     GL_position_index_vlp16 = 0;
                 }
                 else if (12 == entriesPerAzimuth) {
                     // HDL32e sends the sequence 12, 11, 9 layers.
                     GL_positions_hdl32e_12.fill(0);
+                    GL_colors_hdl32e_12.fill(0);
                     GL_position_index_hdl32e_12 = 0;
                 }
                 else if (11 == entriesPerAzimuth) {
                     GL_positions_hdl32e_11.fill(0);
+                    GL_colors_hdl32e_11.fill(0);
                     GL_position_index_hdl32e_11 = 0;
                 }
                 else if (9 == entriesPerAzimuth) {
                     GL_positions_hdl32e_9.fill(0);
+                    GL_colors_hdl32e_9.fill(0);
                     GL_position_index_hdl32e_9 = 0;
                 }
 
@@ -545,7 +549,7 @@ var map = new maptalks.Map("map",{
                         var b = 1.0;
 
                         // Extract intensity.
-                        if ( (0 < numberOfBitsForIntensity) ) {
+                        if (0 < numberOfBitsForIntensity) {
                             var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
                             var extractedIntensity = distance & MASK;
                             extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
@@ -576,7 +580,7 @@ var map = new maptalks.Map("map",{
                             }
 
                             // Remove intensity from distance.
-                            distance = distance & (0xFFFF >> numberOfBitsForIntensity);
+                            distance = distance & ((0xFFFF >> numberOfBitsForIntensity)&0xFFFF);
                         }
 
                         distance /= 100.0;
