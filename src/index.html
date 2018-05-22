@@ -580,7 +580,7 @@ var map = new maptalks.Map("map",{
                             }
 
                             // Remove intensity from distance.
-                            distance = distance & ((0xFFFF >> numberOfBitsForIntensity)&0xFFFF);
+                            distance -= extractedIntensity;
                         }
 
                         distance /= 100.0;
