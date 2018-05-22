@@ -23,7 +23,7 @@
         <script type="text/javascript" src="maptalks.min.js"></script>
         <script type="text/javascript" src="smoothie.min.js"></script>
 
-        <script src="libcluon-0.0.97.js"></script>
+        <script src="libcluon-0.0.98.js"></script>
 
         <style>
             body, html {
@@ -214,6 +214,7 @@
 
         var geometry_pointcloud_vlp16 = new THREE.BufferGeometry();
         var MAX_POINTS_vlp16 = 63000;
+
         var positions_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // 3 vertices per point
         positions_vlp16.fill(0);
         geometry_pointcloud_vlp16.addAttribute('position', new THREE.BufferAttribute(positions_vlp16, 3));
