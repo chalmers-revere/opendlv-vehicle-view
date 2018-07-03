@@ -23,7 +23,11 @@
         <script type="text/javascript" src="maptalks.min.js"></script>
         <script type="text/javascript" src="smoothie.min.js"></script>
 
-        <script src="libcluon-0.0.98.js"></script>
+        <script type="text/javascript" src="Decoder.js"></script>
+        <script type="text/javascript" src="YUVCanvas.js"></script>
+        <script type="text/javascript" src="Player.js"></script>
+
+        <script src="libcluon-0.0.102.js"></script>
 
         <style>
             body, html {
@@ -137,6 +141,7 @@
             <div class="main">
                 <div class="elementNoShadow">
                     <center>
+                        <div id="canvasForH264Frame"></div>
                         <div id="ego-3dview"></div>
                     </center>
                 </div>
@@ -178,9 +183,10 @@
     var scene = new THREE.Scene();
 
     var renderer = new THREE.WebGLRenderer();
-    renderer.setSize( 700, 500 );
+    renderer.setSize(400, 286);
     renderer.setClearColor(new THREE.Color(0xaaaaaa));
     document.getElementById('ego-3dview').appendChild(renderer.domElement);
+    document.getElementById('ego-3dview').style.visibility = "hidden";
 
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     camera.position.y = 5;
@@ -440,7 +446,7 @@ var map = new maptalks.Map("map",{
     }
 
     if ("WebSocket" in window) {
-        var ws = new WebSocket("ws://" + window.location.host + "/");
+        var ws = new WebSocket("ws://" + window.location.host + "/", "od4");
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
@@ -448,7 +454,7 @@ var map = new maptalks.Map("map",{
             document.getElementById("connectionStatusSymbol").style.color = "#3CB371";
             document.getElementById("connectionStatusText").style.color = "#3CB371";
             document.getElementById("connectionStatusText").innerHTML = "connected";
-            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.1.odvd");
+            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.5.odvd");
             console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
         };
 
@@ -476,7 +482,33 @@ var map = new maptalks.Map("map",{
                 var c = [data.opendlv_proxy_GeodeticWgs84Reading.longitude, data.opendlv_proxy_GeodeticWgs84Reading.latitude];
                 map.setCenter(c);
             }
+            if (data.dataType == 1055) {
+                if (!window.player) {
+                    // Create player and renderer.
+                    window.player = new Player({useWorker: true,
+                                                webgl: 'auto',
+                                                size: {
+                                                    width: data.opendlv_proxy_ImageReading.width,
+                                                    height: data.opendlv_proxy_ImageReading.height
+                                                }
+                                               });
+                    // Add element to page.
+                    var playerElement = document.getElementById("canvasForH264Frame");
+                    playerElement.appendChild(window.player.canvas);
+                    playerElement.style.visibility = "visible";
+                }
+                if (window.player) {
+                    // Mapping function to make wide chars to regular bytes.
+                    strToAB = str =>
+                     new Uint8Array(str.split('')
+                       .map(c => c.charCodeAt(0))).buffer;
+                    // Render frame.
+                    window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
+                }
+              return;
+            }
             if (data.dataType == 49) {
+                document.getElementById('ego-3dview').style.visibility = "visible";
                 // CompactPointCloud
                 var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
 

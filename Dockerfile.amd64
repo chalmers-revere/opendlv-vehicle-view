@@ -13,11 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM alpine:3.7
+FROM chalmersrevere/opendlv-ui-server-amd64:v0.0.9
 MAINTAINER Christian Berger "christian.berger@gu.se"
 
-RUN apk add libcluon --no-cache --repository https://chrberger.github.io/libcluon/alpine/v3.7 --allow-untrusted
-RUN mkdir -p /opt/bin && wget -O /opt/bin/websocketd https://github.com/se-research/websocketd-alpine/raw/master/x86_64/websocketd && chmod 755 /opt/bin/websocketd
-RUN mkdir /opt/vehicle-view
 ADD src/ /opt/vehicle-view
-ENTRYPOINT ["/opt/bin/websocketd", "--staticdir=/opt/vehicle-view", "--port=8081", "--binary=true", "/bin/cluon-OD4toStdout"]
+ENTRYPOINT ["/usr/bin/opendlv-ui-server", "--http-root=/opt/vehicle-view", "--port=8081"]
