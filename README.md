@@ -22,7 +22,10 @@ No dependencies! The following dependencies are part of the source distribution:
 * [three 88](https://cdnjs.cloudflare.com/ajax/libs/three.js/88/three.min.js)
 * [gauge 2.1.4](https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.4/all/gauge.min.js)
 * [smoothie 1.32.0](https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.32.0/smoothie.min.js)
-* [libcluon.js 0.0.98](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+* [libcluon.js 0.0.102](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+* [Decoder.js](https://github.com/Dregu/visio/blob/master/Decoder.js)
+* [Player.js](https://github.com/Dregu/visio/blob/master/Player.js)
+* [YUVCanvas.js](https://github.com/Dregu/visio/blob/master/YUVCanvas.js)
 
 
 ## Usage
@@ -36,7 +39,7 @@ OpenDLV Standard Message Set that are exchanged in a running OpenDLV.io session
 (running at 111 in the example), simply run it as follows:
 
 ```
-docker run --rm --net=host -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.16 --cid=111
+docker run --rm --net=host -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.18 --cid=111
 ```
 
 Now, simply point your web-browser to the IP address and port 8081 where you
