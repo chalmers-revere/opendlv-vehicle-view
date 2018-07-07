@@ -16,6 +16,8 @@
         <link type="text/css" rel="stylesheet" href="font-awesome.min.css"/>
         <link type="text/css" rel="stylesheet" href="maptalks.css"/>
 
+        <script type="text/javascript" src="jquery-3.2.1.slim.min.js"></script>
+
         <script type="text/javascript" src="three.min.js"></script>
         <script type="text/javascript" src="OrbitControls.js"></script>
 
@@ -150,8 +152,17 @@
             <div class="right">
                 <div class="element">
                     <center>
-                        <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i>
-                        <div id="connectionStatusText">disconnected</div>
+                        <table cellpadding="10">
+                            <tr>
+                                <th>
+                                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i>
+                                    <div id="connectionStatusText">disconnected</div>
+                                </th>
+                                <th>
+                                    <button id="record" type="button" class="fa fa-circle" style="font-size:30px;color:#555"></button>
+                                </th>
+                            </tr>
+                        </table>
                     </center>
                 </div>
 
@@ -435,6 +446,8 @@ var map = new maptalks.Map("map",{
     var verticalAngles12 = [-30.67, -29.33, -25.33, -21.32, -17.32, -13.31, -9.31, -5.3, -1.3, 2.71, 6.71, 10.72];
     var verticalAngles11 = [-28.0, -26.66, -22.66, -18.65, -14.65, -10.64, -6.64, -2.63, 1.37, 5.38, 9.38];
     var verticalAngles9 = [-23.99, -19.99, -15.98, -11.98, -7.97, -3.97, 0.04, 4.04, 8.05];
+
+    var recording = false;
 
     var __libcluon = libcluon();
 
@@ -722,6 +735,21 @@ var map = new maptalks.Map("map",{
         // The browser doesn't support WebSocket
         console.log("WebSocket NOT supported by your Browser!");
     }
+
+    $(document).ready(function(){
+        $('body').on('click', 'button#record', function() {
+            recording = !recording;
+            if (recording) {
+                $('button#record').css('color', '#D00');
+                ws.send("{ \"record\": true }", { binary: false });
+            }
+            else {
+                $('button#record').css('color', '#555');
+                ws.send("{ \"record\": false }", { binary: false });
+            }
+        });
+    });
+
 </script>
 
 
