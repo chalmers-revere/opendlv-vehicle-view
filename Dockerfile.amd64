@@ -24,10 +24,10 @@ RUN apk update && \
         nodejs \
         npm
 
-RUN mkdir -p /opt/recordings
+RUN mkdir -p /opt/vehicle-view/recordings
 
-WORKDIR /app
-RUN npm install ws express ps-tree --save --production
+WORKDIR /opt/vehicle-view
+RUN npm install express express-handlebars fs ps-tree ws --save --production
 COPY src/ .
 
 EXPOSE 8081

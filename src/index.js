@@ -1,6 +1,8 @@
 // Dependencies.
 var dgram = require('dgram');
+const fs = require('fs');
 var express = require("express");
+var exphbs  = require('express-handlebars');
 const { exec } = require('child_process');
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,6 +35,41 @@ app.get("/", function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
 
+// Template engine.
+app.engine('.hbs', exphbs({extname: '.hbs'}));
+app.set('view engine', '.hbs');
+
+// Download links.
+app.get("/download", function(req, res) {
+    var files = {
+          recfiles: []
+    };
+
+    const testFolder = './recordings';
+    fs.readdirSync(testFolder).forEach(file => {
+        files.recfiles.push({
+            "name" : file,
+            "filename" : testFolder + "/" + file,
+            "size" : fs.statSync(path.join(testFolder + '/' + file)).size
+        });
+    });
+
+    res.render('download', files);
+});
+
+app.get("/playback", function(req, res) {
+    var small_data = {
+          people: [
+            {firstName: "Yehuda", lastName: "Katz"},
+            {firstName: "Carl", lastName: "Lerche"},
+            {firstName: "Alan", lastName: "Johnson"}
+          ]
+        };
+
+    res.render('playback', small_data);
+});
+
+
 // Other static files.
 app.get(/^(.+)$/, function(req, res){ 
     res.sendFile(path.join(__dirname + '/' + req.params[0]));
@@ -54,7 +91,7 @@ ws.on('connection', function connection(ws) {
         if ( (msg[0] == '{') && (msg[msg.length-1] == '}') ) {
             var data = JSON.parse(msg);
             if (data.record) {
-                record = exec('cluon-OD4toStdout --cid=111 > /opt/recordings/`date +CID-111-recording-%Y-%m-%d_%H%M%S.rec`');
+                record = exec('cluon-OD4toStdout --cid=111 > ./recordings/`date +CID-111-recording-%Y-%m-%d_%H%M%S.rec`');
                 console.log('Started cluon-OD4toStdout, PID: ' + record.pid);
             }
             else {

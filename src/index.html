@@ -12,8 +12,9 @@
         <script type="text/javascript" src="//cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.4/all/gauge.min.js"></script>
         <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.32.0/smoothie.min.js"></script>
--->
         <link type="text/css" rel="stylesheet" href="font-awesome.min.css"/>
+-->
+        <link type="text/css" rel="stylesheet" href="all.css"/>
         <link type="text/css" rel="stylesheet" href="maptalks.css"/>
 
         <script type="text/javascript" src="jquery-3.2.1.slim.min.js"></script>
@@ -86,7 +87,7 @@
             .module > header > h1 {
               margin: 0;
               font-family: Awesome;
-              color: white;
+              color: gray;
               position: relative;
               z-index: 1;
             }
@@ -129,8 +130,6 @@
         </style>
     </head>
 
-<body style="font-family:Awesome;">
-
 <div class="bg">
     <div class="module">
         <header>
@@ -152,15 +151,25 @@
             <div class="right">
                 <div class="element">
                     <center>
-                        <table cellpadding="10">
+                        <table cellpadding="2">
                             <tr>
-                                <th>
+                                <td colspan="2">
+                                    <center>
                                     <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i>
                                     <div id="connectionStatusText">disconnected</div>
-                                </th>
-                                <th>
-                                    <button id="record" type="button" class="fa fa-circle" style="font-size:30px;color:#555"></button>
-                                </th>
+                                    </center>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <button id="record" type="button" class="fa fa-circle" style="font-size:20px;color:#555;padding: 5px 30px;"></button>
+                                </td>
+                                <td>
+<!--
+                                    <button id="download" type="button" class="fas fa-file-download" style="font-size:20px;color:#27AE60;padding: 5px 30px;"></button>
+-->
+                                    <button id="download" type="button" class="fas fa-file-download" style="font-size:20px;color:#27AE60;padding: 5px 30px;" onclick="location.href='download'"></button>
+                                </td>
                             </tr>
                         </table>
                     </center>
