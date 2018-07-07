@@ -40,6 +40,9 @@ app.engine('.hbs', exphbs({extname: '.hbs'}));
 app.set('view engine', '.hbs');
 
 // Download links.
+const addThousandsSeparator = (x) => {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 app.get("/download", function(req, res) {
     var files = {
           recfiles: []
@@ -47,27 +50,29 @@ app.get("/download", function(req, res) {
 
     const testFolder = './recordings';
     fs.readdirSync(testFolder).forEach(file => {
+        var size = fs.statSync(path.join(testFolder + '/' + file)).size;
+        size = addThousandsSeparator(size);
         files.recfiles.push({
             "name" : file,
             "filename" : testFolder + "/" + file,
-            "size" : fs.statSync(path.join(testFolder + '/' + file)).size
+            "size" : size
         });
     });
 
     res.render('download', files);
 });
 
-app.get("/playback", function(req, res) {
-    var small_data = {
-          people: [
-            {firstName: "Yehuda", lastName: "Katz"},
-            {firstName: "Carl", lastName: "Lerche"},
-            {firstName: "Alan", lastName: "Johnson"}
-          ]
-        };
+//app.get("/playback", function(req, res) {
+//    var small_data = {
+//          people: [
+//            {firstName: "Yehuda", lastName: "Katz"},
+//            {firstName: "Carl", lastName: "Lerche"},
+//            {firstName: "Alan", lastName: "Johnson"}
+//          ]
+//        };
 
-    res.render('playback', small_data);
-});
+//    res.render('playback', small_data);
+//});
 
 
 // Other static files.

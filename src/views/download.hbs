@@ -1,16 +1,84 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>Recordings for download</title>
-</head>
-<body>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<a href="..">Back</a><br>
+        <link type="text/css" rel="stylesheet" href="all.css"/>
 
+        <style>
+            * {
+              box-sizing: border-box;
+            }
+
+            .background-image {
+              background-image: url('background.jpg');
+              background-size: cover;
+              display: block;
+              filter: blur(5px);
+              -webkit-filter: blur(5px);
+              height: 800px;
+              left: 0;
+              position: fixed;
+              right: 0;
+              z-index: 1;
+            }
+
+            .content {
+              background: rgba(255, 255, 255, 0.35);
+              border-radius: 3px;
+              box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+              top: 10px;
+              left: 0;
+              position: fixed;
+              margin-left: 20px;
+              margin-right: 20px;
+              right: 0;
+              z-index: 2;
+              padding: 0 10px;
+            }
+        </style>
+    </head>
+
+<div class="background-image"></div>
+
+<div class="content">
+
+<center>
+<p><button id="download" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#27AE60;padding: 5px 30px;" onclick="location.href='..'"></button></p>
+</center>
+
+<table cellpadding="2" width="100%">
+    <tr>
+        <th>
+        Download
+        </th>
+        <th>
+        Name
+        </th>
+        <th>
+        Size
+        </th>
+    </tr>
 {{#each recfiles}}
-    <a href="{{filename}}">{{name}}</a> ({{size}} bytes)<br>
+    <tr>
+        <td align="center">
+        <button id="download" type="button" class="fas fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="location.href='{{filename}}'">&nbsp;.rec</button>
+        </td>
+        <td align="left">
+        {{name}}
+        </td>
+        <td align="right">
+        {{size}} bytes
+        </td>
+    </tr>
+<!--
+    <p><a href="{{filename}}">{{name}}</a> ({{size}} bytes)</p>
+-->
 {{/each}}
+</table>
+</div>
 
 </body>
 </html>
+
