@@ -30,18 +30,18 @@ var path = require('path');
 
 // Landing page.
 app.get("/", function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'))
+    res.sendFile(path.join(__dirname + '/index.html'));
 });
 
 // Other static files.
 app.get(/^(.+)$/, function(req, res){ 
-    res.sendFile(path.join(__dirname + '/' + req.params[0]))
+    res.sendFile(path.join(__dirname + '/' + req.params[0]));
 });
 
 // Start server.
 var port = process.env.PORT || 8081;
 var server = app.listen(port, function () {
-    console.log('Listening on port: ' + port)
+    console.log('Listening on port: ' + port);
 })
 
 ////////////////////////////////////////////////////////////////////////////////
