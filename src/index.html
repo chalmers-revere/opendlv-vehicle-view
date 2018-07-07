@@ -163,6 +163,31 @@
 
                 <div class="element">
                     <center>
+                    <table cellpadding="2">
+                        <tr>
+                        <td>
+                        Now:
+                        </td>
+                        <td>
+                        <div id="currentTime">-</div>
+                        </td>
+                        </tr>
+
+                        <tr>
+                        <td>
+                        Sample:
+                        </td>
+                        <td>
+                        <div id="containerTimeStamp">-</div>
+                        </td>
+                        </tr>
+                    </table>
+
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
                     <canvas id="speed"></canvas>
                     </center>
                 </div>
@@ -467,20 +492,24 @@ var map = new maptalks.Map("map",{
         };
 
 
-        var oldTimeStamp = 0;
+        var currentTimeStamp = 0;
         ws.onmessage = function(evt) {
             // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
             var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
 
             if (data.dataType > 0) {
-                if (oldTimeStamp == 0) {
-                    oldTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
-                }
-                else {
-                    var currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
-                    dataLine.append(new Date().getTime(), Math.abs(currentTimeStamp - oldTimeStamp));
-                    oldTimeStamp = currentTimeStamp;
-                }
+                currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
+
+                var date = new Date(currentTimeStamp/1000);
+                var year = date.getFullYear();
+                var month = "0" + (date.getMonth()+1);
+                var day = "0" + date.getDate();
+                var hours = date.getHours();
+                var minutes = "0" + date.getMinutes();
+                var seconds = "0" + date.getSeconds();
+
+                var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                document.getElementById("containerTimeStamp").innerHTML = formattedTime;
             }
 
             if (data.dataType == 1046) {
@@ -745,6 +774,21 @@ var map = new maptalks.Map("map",{
         });
     });
 
+    function instance() {
+        var date = new Date(new Date().getTime());
+        var year = date.getFullYear();
+        var month = "0" + (date.getMonth()+1);
+        var day = "0" + date.getDate();
+        var hours = date.getHours();
+        var minutes = "0" + date.getMinutes();
+        var seconds = "0" + date.getSeconds();
+
+        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+        $('#currentTime').text(formattedTime);
+        window.setTimeout(instance, 500);
+    }
+    window.setTimeout(instance, 500);
 </script>
 
 
