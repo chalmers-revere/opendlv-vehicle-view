@@ -38,11 +38,12 @@
                 background-repeat: no-repeat;
                 background-size: cover;
                 font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 12px;
             }
 
             .main {
               float:left;
-              width:70%;
+              width:75%;
               padding:2px 2px;
               margin-top:10px;
               margin-left:10px;
@@ -50,7 +51,7 @@
 
             .right {
               float:right;
-              width:20%;
+              width:23%;
               padding:2px 2px;
               margin-top:10px;
               margin-left:10px;
@@ -156,6 +157,18 @@
 
                 <div class="element">
                     <center>
+                    <canvas id="speed"></canvas>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
+                    <div id="map"></div>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
                     <table cellpadding="2">
                         <tr>
                         <td>
@@ -174,38 +187,26 @@
                         <div id="containerTimeStamp">-</div>
                         </td>
                         </tr>
-
-                        <tr>
-                        <td>
-                        Envelopes:
-                        </td>
-                        <td>
-                        <div id="envelopeCounter">-</div>
-                        </td>
-                        </tr>
                     </table>
-
                     </center>
                 </div>
 
                 <div class="element">
                     <center>
-                    <canvas id="speed"></canvas>
+                    <table>
+                        <tbody id="table-body">
+                        </tbody>
+                    </table>
                     </center>
                 </div>
 
-                <div class="element">
-                    <center>
-                    <div id="map"></div>
-                    </center>
-                </div>
-
+<!--
                 <div class="element">
                     <center>
                     <canvas id="cpu-load" width="220" height="100"></canvas>
                     </center>
                 </div>
-
+-->
             </div>
         </div>
     </div>
@@ -385,6 +386,7 @@ gaugePS.draw();
 </script>
 
 
+<!--
 <script>
     var dataLine = new TimeSeries();
 
@@ -398,7 +400,7 @@ gaugePS.draw();
     // Add to SmoothieChart
     chart.addTimeSeries(dataLine);
 </script>
-
+-->
 
 <script>
 var map = new maptalks.Map("map",{
@@ -492,7 +494,8 @@ var map = new maptalks.Map("map",{
             console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
         };
 
-
+        var mapOfMessages = {};
+        var $table = $('#table-body');
         var showWarningForSenderStampNotZero = true;
         var envelopeCounter = 0;
         var currentTimeStamp = 0;
@@ -500,7 +503,6 @@ var map = new maptalks.Map("map",{
             // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
             var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
             envelopeCounter++;
-            document.getElementById("envelopeCounter").innerHTML = envelopeCounter++;
 
             if ( (data.dataType > 0) && (data.senderStamp > 0) ) {
                 if (showWarningForSenderStampNotZero) {
@@ -523,6 +525,29 @@ var map = new maptalks.Map("map",{
 
                 var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
                 document.getElementById("containerTimeStamp").innerHTML = formattedTime;
+
+                // Do book keeping of envelopes.
+                if (!(Object.keys(data)[5] in mapOfMessages)) {
+                    mapOfMessages[Object.keys(data)[5]] = 0;
+                }
+                mapOfMessages[Object.keys(data)[5]] = mapOfMessages[Object.keys(data)[5]] + 1;
+
+                if ( 0 == (envelopeCounter % 100)) {
+                    $table.empty(); // empty is more explicit
+
+                    for (var k in mapOfMessages) {
+                        var $row = $('<tr>').appendTo($table);
+
+                        var $msg = $('<td>')
+                            .text(k);
+
+//                        var $qty = $('<td>')
+//                            .text(mapOfMessages[k])
+//                            .appendTo($msg);
+
+                        $msg.appendTo($row);
+                    }
+                }
             }
 
             if (data.dataType == 1046) {
