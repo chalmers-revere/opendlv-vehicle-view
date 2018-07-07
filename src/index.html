@@ -37,6 +37,7 @@
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
             }
 
             .main {
@@ -93,14 +94,6 @@
 
             #map { width: 220px; height: 220px;  }
 
-            ul.fancytree-container {
-              margin: 4px;
-              width: 300px;
-              height: 200px;
-              overflow: auto;
-              position: relative;
-            }
-
             @media only screen and (max-width:800px) {
               /* For tablets: */
               .main {
@@ -122,7 +115,7 @@
 <div class="bg">
     <div class="module">
         <header>
-            <h1>vehicle view</h1>
+            <h1>OpenDLV Vehicle View</h1>
         </header>
     </div>
 
@@ -179,6 +172,15 @@
                         </td>
                         <td>
                         <div id="containerTimeStamp">-</div>
+                        </td>
+                        </tr>
+
+                        <tr>
+                        <td>
+                        Envelopes:
+                        </td>
+                        <td>
+                        <div id="envelopeCounter">-</div>
                         </td>
                         </tr>
                     </table>
@@ -380,7 +382,6 @@ var gaugePS = new RadialGauge({
     animationRule: "linear"
 });
 gaugePS.draw();
-//gaugePS.value = "510";
 </script>
 
 
@@ -404,7 +405,7 @@ var map = new maptalks.Map("map",{
     center : [-118.150127,33.779397],
     pitch : 0,
     bearing : 0,
-    zoom : 14,
+    zoom : 17,
     centerCross: true,
     attribution : {
       'content' : '<span style="padding:4px"><font size=1>&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a></font> </span>'
@@ -492,10 +493,22 @@ var map = new maptalks.Map("map",{
         };
 
 
+        var showWarningForSenderStampNotZero = true;
+        var envelopeCounter = 0;
         var currentTimeStamp = 0;
         ws.onmessage = function(evt) {
             // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
             var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
+            envelopeCounter++;
+            document.getElementById("envelopeCounter").innerHTML = envelopeCounter++;
+
+            if ( (data.dataType > 0) && (data.senderStamp > 0) ) {
+                if (showWarningForSenderStampNotZero) {
+                    showWarningForSenderStampNotZero = false;
+                    alert("Warning! OpenDLV Vehicle View does not support multiple streams for the same data type yet.");
+                }
+                return;
+            }
 
             if (data.dataType > 0) {
                 currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
@@ -542,7 +555,6 @@ var map = new maptalks.Map("map",{
                     // Render frame.
                     window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
                 }
-              return;
             }
             if (data.dataType == 49) {
                 document.getElementById('ego-3dview').style.visibility = "visible";
