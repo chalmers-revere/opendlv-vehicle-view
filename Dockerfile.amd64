@@ -13,12 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#FROM chalmersrevere/opendlv-ui-server-amd64:v0.0.9
-#MAINTAINER Christian Berger "christian.berger@gu.se"
-
-#ADD src/ /opt/vehicle-view
-#ENTRYPOINT ["/usr/bin/opendlv-ui-server", "--http-root=/opt/vehicle-view", "--port=8081"]
-
 FROM chrberger/cluon-amd64:latest
 MAINTAINER Christian Berger "christian.berger@gu.se"
 

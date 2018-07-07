@@ -13,8 +13,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM chalmersrevere/opendlv-ui-server-armhf:v0.0.9
+FROM chrberger/cluon-armhf:latest
 MAINTAINER Christian Berger "christian.berger@gu.se"
 
-ADD src/ /opt/vehicle-view
-ENTRYPOINT ["/usr/bin/opendlv-ui-server", "--http-root=/opt/vehicle-view", "--port=8081"]
+RUN [ "cross-build-start" ]
+
+RUN echo http://dl-4.alpinelinux.org/alpine/edge/main > /etc/apk/repositories && \
+    echo http://dl-4.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories
+
+RUN apk update && \
+    apk --no-cache add \
+        nodejs \
+        npm
+
+RUN mkdir -p /opt/recordings
+
+WORKDIR /app
+RUN npm install ws express ps-tree --save --production
+
+RUN [ "cross-build-end" ]
+
+COPY src/ .
+
+EXPOSE 8081
+CMD ["node", "index.js"]
+
