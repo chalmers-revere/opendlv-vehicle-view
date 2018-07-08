@@ -35,6 +35,21 @@ app.get("/", function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
 
+
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+app.post('/deleterecordingfile', (req, res) => {
+    fs.unlink(req.body.recordingFileToDelete, function() {
+        res.send ({
+            status: "200",
+            responseType: "string",
+            response: "success"
+        });
+    });
+});
+
 // Template engine.
 app.engine('.hbs', exphbs({extname: '.hbs'}));
 app.set('view engine', '.hbs');

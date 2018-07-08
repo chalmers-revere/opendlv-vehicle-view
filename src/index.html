@@ -148,7 +148,7 @@
                                     <button id="record" type="button" class="fa fa-circle" style="font-size:20px;color:#555;padding: 5px 30px;"></button>
                                 </td>
                                 <td>
-                                    <button id="download" type="button" class="fas fa-file-download" style="font-size:20px;color:#27AE60;padding: 5px 30px;" onclick="location.href='download'"></button>
+                                    <button id="download" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='download'"></button>
                                 </td>
                             </tr>
                         </table>
@@ -811,7 +811,7 @@ var map = new maptalks.Map("map",{
         });
     });
 
-    function instance() {
+    function clock() {
         var date = new Date(new Date().getTime());
         var year = date.getFullYear();
         var month = "0" + (date.getMonth()+1);
@@ -823,9 +823,17 @@ var map = new maptalks.Map("map",{
         var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
 
         $('#currentTime').text(formattedTime);
-        window.setTimeout(instance, 500);
+        window.setTimeout(clock, 500);
     }
-    window.setTimeout(instance, 500);
+    window.setTimeout(clock, 500);
+
+    window.addEventListener("beforeunload", function (e) {
+        var confirmationMessage = "Recording is ongoing that will be canceled when leaving this page.";
+        if (recording) {
+            (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+            return confirmationMessage;                            //Webkit, Safari, Chrome
+        }
+    });
 </script>
 
 

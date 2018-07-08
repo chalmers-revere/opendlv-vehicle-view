@@ -27,7 +27,7 @@ RUN apk update && \
 RUN mkdir -p /opt/vehicle-view/recordings
 
 WORKDIR /opt/vehicle-view
-RUN npm install express express-handlebars fs ps-tree ws --save --production
+RUN npm install body-parser express express-handlebars fs ps-tree ws --save --production
 COPY src/ .
 
 EXPOSE 8081
