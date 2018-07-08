@@ -64,6 +64,7 @@
     <tr>
         <td align="center">
         <button id="download" type="button" class="fas fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
+        <button id="playFile" type="button" class="far fa-play-circle" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
         <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
         </td>
         <td align="left">
@@ -78,6 +79,27 @@
 </div>
 
 <script>
+function replayFile(filename, name) {
+    fetch('/replayfile', { method: 'post',
+                        headers: {
+                            'Accept': 'application/json, text/plain, */*',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({recordingFileToPlay: filename})
+                       }
+    )
+    .then(function(response) {
+        if(response.ok) {
+            window.location = "../playback.html";
+            return;
+        }
+        throw new Error('Request failed.');
+        })
+    .catch(function(error) {
+        console.log(error);
+    });
+}
+
 function deleteFile(filename, name) {
     if (confirm("Do you really want to delete '" + name + "'?")) {
         fetch('/deleterecordingfile', { method: 'post',

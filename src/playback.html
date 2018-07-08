@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link type="text/css" rel="stylesheet" href="all.css"/>
+        <link type="text/css" rel="stylesheet" href="maptalks.css"/>
+
+        <script type="text/javascript" src="jquery-3.2.1.slim.min.js"></script>
+
+        <script type="text/javascript" src="three.min.js"></script>
+        <script type="text/javascript" src="OrbitControls.js"></script>
+
+        <script type="text/javascript" src="gauge.min.js"></script>
+        <script type="text/javascript" src="maptalks.min.js"></script>
+        <script type="text/javascript" src="smoothie.min.js"></script>
+
+        <script type="text/javascript" src="Decoder.js"></script>
+        <script type="text/javascript" src="YUVCanvas.js"></script>
+        <script type="text/javascript" src="Player.js"></script>
+
+        <script src="libcluon-0.0.102.js"></script>
+
+        <style>
+            body, html {
+                height: 100%;
+                margin: 0;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            .bg {
+                background-image: url("background.jpg");
+                height: 100%; 
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 12px;
+            }
+
+            .main {
+              float:left;
+              width:75%;
+              padding:2px 2px;
+              margin-top:10px;
+              margin-left:10px;
+            }
+
+            .right {
+              float:right;
+              width:23%;
+              padding:2px 2px;
+              margin-top:10px;
+              margin-left:10px;
+            }
+
+            .element {
+              margin-top:10px;
+              margin-left:10px;
+              box-shadow: 3px 3px 3px #aaaaaa;
+            }
+
+            .elementNoShadow {
+            }
+
+            .module > header {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              width: 100%;
+              padding: 20px 10px;
+              background: inherit;
+              background-attachment: fixed;
+            }
+            .module > header > h1 {
+              margin: 0;
+              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+              color: gray;
+              position: relative;
+              z-index: 1;
+            }
+
+            div.smoothie-chart-tooltip {
+              background: #444;
+              padding: 1em;
+              margin-top: 20px;
+              font-family: Awesome;
+              color: white;
+              font-size: 10px;
+              pointer-events: none;
+            }
+
+            #map { width: 220px; height: 220px;  }
+
+            @media only screen and (max-width:800px) {
+              /* For tablets: */
+              .main {
+                width:80%;
+              }
+              .right {
+                width:100%;
+              }
+            }
+            @media only screen and (max-width:500px) {
+              /* For mobile phones: */
+              .main, .right {
+                width:100%;
+              }
+            }
+        </style>
+    </head>
+
+<div class="bg">
+    <div class="module">
+        <header>
+            <h1>OpenDLV Vehicle View</h1>
+        </header>
+    </div>
+
+    <div>
+        <div style="overflow:auto">
+            <div class="main">
+                <div class="elementNoShadow">
+                    <center>
+                        <div id="canvasForH264Frame"></div>
+                        <div id="ego-3dview"></div>
+                    </center>
+                </div>
+            </div>
+
+            <div class="right">
+                <div class="element">
+                    <center>
+                        <table cellpadding="2">
+                            <tr>
+                                <td colspan="2">
+                                    <center>
+                                    <button id="endReplay" type="button" class="fas fa-power-off" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(true)" title="End replay and return to live OD4Session."></button>
+                                    </center>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
+                                </td>
+                            </tr>
+                        </table>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
+                    <canvas id="speed"></canvas>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
+                    <div id="map"></div>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
+                    <table cellpadding="2">
+                        <tr>
+                        <td>
+                        Now:
+                        </td>
+                        <td>
+                        <div id="currentTime">-</div>
+                        </td>
+                        </tr>
+
+                        <tr>
+                        <td>
+                        Sample:
+                        </td>
+                        <td>
+                        <div id="containerTimeStamp">-</div>
+                        </td>
+                        </tr>
+                    </table>
+                    </center>
+                </div>
+
+                <div class="element">
+                    <center>
+                    <table>
+                        <tbody id="table-body">
+                        </tbody>
+                    </table>
+                    </center>
+                </div>
+
+<!--
+                <div class="element">
+                    <center>
+                    <canvas id="cpu-load" width="220" height="100"></canvas>
+                    </center>
+                </div>
+-->
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var scene = new THREE.Scene();
+
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(400, 286);
+    renderer.setClearColor(new THREE.Color(0xaaaaaa));
+    document.getElementById('ego-3dview').appendChild(renderer.domElement);
+    document.getElementById('ego-3dview').style.visibility = "hidden";
+
+    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+    camera.position.y = 5;
+    camera.position.z = 5;
+    camera.lookAt (new THREE.Vector3(0, 0, 0));
+    scene.add (camera);
+
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set (0, 20, 20);
+    scene.add (pointLight);
+    
+    var ambientLight = new THREE.AmbientLight (0xaaaaaa);
+    scene.add(ambientLight);
+
+
+    var gridXZ = new THREE.GridHelper(50, 50, 0xff0000, 0xffffff);
+    scene.add(gridXZ);
+
+
+    // Point Cloud for VLP16:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_vlp16 = new THREE.BufferGeometry();
+        var MAX_POINTS_vlp16 = 63000;
+
+        var positions_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // 3 vertices per point
+        positions_vlp16.fill(0);
+        geometry_pointcloud_vlp16.addAttribute('position', new THREE.BufferAttribute(positions_vlp16, 3));
+
+        var colors_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // RGB per point
+        colors_vlp16.fill(0);
+        geometry_pointcloud_vlp16.addAttribute('color', new THREE.BufferAttribute(colors_vlp16, 3));
+
+        var particles_pointcloud_vlp16 = new THREE.Points( geometry_pointcloud_vlp16, pointMaterial );
+        scene.add( particles_pointcloud_vlp16 );
+    }
+
+    // Point Cloud for HDL32e_12 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_12 = new THREE.BufferGeometry();
+        var MAX_POINTS_hdl32e_12 = 63000;
+        var positions_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // 3 vertices per point
+        positions_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_12, 3));
+
+        var colors_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // RGB per point
+        colors_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_12, 3));
+
+        var particles_pointcloud_hdl32e_12 = new THREE.Points( geometry_pointcloud_hdl32e_12, pointMaterial );
+        scene.add( particles_pointcloud_hdl32e_12 );
+    }
+
+    // Point Cloud for HDL32e_11 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_11 = new THREE.BufferGeometry();
+        var MAX_POINTS_hdl32e_11 = 63000;
+        var positions_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // 3 vertices per point
+        positions_hdl32e_11.fill(0);
+        geometry_pointcloud_hdl32e_11.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_11, 3));
+
+        var colors_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // RGB per point
+        colors_hdl32e_11.fill(0);
+        geometry_pointcloud_hdl32e_11.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_11, 3));
+
+        var particles_pointcloud_hdl32e_11 = new THREE.Points( geometry_pointcloud_hdl32e_11, pointMaterial );
+        scene.add( particles_pointcloud_hdl32e_11 );
+    }
+
+    // Point Cloud for HDL32e_9 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_9 = new THREE.BufferGeometry();
+        var MAX_POINTS_hdl32e_9 = 63000;
+        var positions_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // 3 vertices per point
+        positions_hdl32e_9.fill(0);
+        geometry_pointcloud_hdl32e_9.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_9, 3));
+
+        var colors_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // RGB per point
+        colors_hdl32e_9.fill(0);
+        geometry_pointcloud_hdl32e_9.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_9, 3));
+
+        var particles_pointcloud_hdl32e_9 = new THREE.Points( geometry_pointcloud_hdl32e_9, pointMaterial );
+        scene.add( particles_pointcloud_hdl32e_9 );
+    }
+
+    var animate = function () {
+        requestAnimationFrame( animate );
+        renderer.render(scene, camera);
+    };
+
+    animate();
+</script>
+
+
+<script>
+var gaugePS = new RadialGauge({
+    renderTo: 'speed',
+   units: "kph",
+    minValue: 0,
+    maxValue: 220,
+    majorTicks: [
+        "0",
+        "20",
+        "40",
+        "60",
+        "80",
+        "100",
+        "120",
+        "140",
+        "160",
+        "180",
+        "200",
+        "220"
+    ],
+    minorTicks: 2,
+    strokeTicks: true,
+    highlights: [
+        {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+        }
+    ],
+    colorPlate: "#fff",
+    borderShadowWidth: 0,
+    borders: false,
+    needleType: "arrow",
+    needleWidth: 2,
+    needleCircleSize: 7,
+    needleCircleOuter: true,
+    needleCircleInner: false,
+    animationDuration: 1500,
+    animationRule: "linear"
+});
+gaugePS.draw();
+</script>
+
+
+<!--
+<script>
+    var dataLine = new TimeSeries();
+
+    var chart = new SmoothieChart({millisPerPixel:100,grid:{millisPerLine:3000,fillStyle:'#eee'},tooltip:true,maxValue:1000.0*1000.0,minValue:0}),
+        canvas = document.getElementById('cpu-load'),
+        line1 = dataLine;
+
+        chart.addTimeSeries(line1, {lineWidth:2,strokeStyle:'rgba(20,20,20,0.55)',fillStyle:'rgba(123,41,0,0.30)'});
+        chart.streamTo(canvas, 1237);
+
+    // Add to SmoothieChart
+    chart.addTimeSeries(dataLine);
+</script>
+-->
+
+<script>
+var map = new maptalks.Map("map",{
+    center : [-118.150127,33.779397],
+    pitch : 0,
+    bearing : 0,
+    zoom : 17,
+    centerCross: true,
+    attribution : {
+      'content' : '<span style="padding:4px"><font size=1>&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a></font> </span>'
+    },
+// a custom version of default web-mercator spatial reference
+        // map's spatial reference definition
+        spatialReference : {
+          projection : 'EPSG:3857', // geo projection, can be a string or a function
+          resolutions : [           // map's zoom levels and resolutions
+            156543.03392804097,
+            78271.51696402048,
+            9135.75848201024,
+            19567.87924100512,
+            9783.93962050256,
+            4891.96981025128,
+            2445.98490512564,
+            1222.99245256282,
+            611.49622628141,
+            305.748113140705,
+            152.8740565703525,
+            76.43702828517625,
+            38.21851414258813,
+            19.109257071294063,
+            9.554628535647032,
+            4.777314267823516,
+            2.388657133911758,
+            1.194328566955879,
+            0.5971642834779395,
+            0.29858214173896974,
+            0.1492910709,
+            0.07464553543,
+            0.03732276771
+          ],
+          fullExtent : {         // map's full extent
+            'top': 6378137 * Math.PI,
+            'left': -6378137 * Math.PI,
+            'bottom': -6378137 * Math.PI,
+            'right': 6378137 * Math.PI
+          }
+        },
+        baseLayer : new maptalks.TileLayer('base',{
+          urlTemplate: 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+          subdomains: ['a','b','c','d'],
+          tileSystem : [1, -1, -20037508.34, 20037508.34], // tile system
+          minZoom : 1,
+          maxZoom : 23
+        })
+});
+</script>
+
+
+<script>
+    var GL_position_index_vlp16 = 0;
+    var GL_position_index_hdl32e_12 = 0;
+    var GL_position_index_hdl32e_11 = 0;
+    var GL_position_index_hdl32e_9 = 0;
+    // Setup look-up table for interleaved vertical layers.
+    var verticalAngles16 = [-15.0, -13.0, -11.0, -9.0, -7.0, -5.0, -3.0, -1.0, 1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0];
+    var verticalAngles12 = [-30.67, -29.33, -25.33, -21.32, -17.32, -13.31, -9.31, -5.3, -1.3, 2.71, 6.71, 10.72];
+    var verticalAngles11 = [-28.0, -26.66, -22.66, -18.65, -14.65, -10.64, -6.64, -2.63, 1.37, 5.38, 9.38];
+    var verticalAngles9 = [-23.99, -19.99, -15.98, -11.98, -7.97, -3.97, 0.04, 4.04, 8.05];
+
+    var recording = false;
+
+    var __libcluon = libcluon();
+
+    function getResourceFrom(url) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", url, false /*asynchronous request*/);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+
+    if ("WebSocket" in window) {
+        var ws = new WebSocket("ws://" + window.location.host + "/", "od4");
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = function() {
+            console.log("Connected...");
+            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.5.odvd");
+            console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
+        };
+
+        var mapOfMessages = {};
+        var $table = $('#table-body');
+        var showWarningForSenderStampNotZero = true;
+        var envelopeCounter = 0;
+        var currentTimeStamp = 0;
+        ws.onmessage = function(evt) {
+            // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
+            var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
+            envelopeCounter++;
+
+            if ( (data.dataType > 0) && (data.senderStamp > 0) ) {
+                if (showWarningForSenderStampNotZero) {
+                    showWarningForSenderStampNotZero = false;
+                    alert("Warning! OpenDLV Vehicle View does not support multiple streams for the same data type yet.");
+                }
+                return;
+            }
+
+            if (data.dataType > 0) {
+                currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
+
+                var date = new Date(currentTimeStamp/1000);
+                var year = date.getFullYear();
+                var month = "0" + (date.getMonth()+1);
+                var day = "0" + date.getDate();
+                var hours = date.getHours();
+                var minutes = "0" + date.getMinutes();
+                var seconds = "0" + date.getSeconds();
+
+                var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                document.getElementById("containerTimeStamp").innerHTML = formattedTime;
+
+                // Do book keeping of envelopes.
+                if (!(Object.keys(data)[5] in mapOfMessages)) {
+                    mapOfMessages[Object.keys(data)[5]] = 0;
+                }
+                mapOfMessages[Object.keys(data)[5]] = mapOfMessages[Object.keys(data)[5]] + 1;
+
+                if ( 0 == (envelopeCounter % 100)) {
+                    $table.empty(); // empty is more explicit
+
+                    for (var k in mapOfMessages) {
+                        var $row = $('<tr>').appendTo($table);
+
+                        var $msg = $('<td>')
+                            .text(k);
+
+//                        var $qty = $('<td>')
+//                            .text(mapOfMessages[k])
+//                            .appendTo($msg);
+
+                        $msg.appendTo($row);
+                    }
+                }
+            }
+
+            if (data.dataType == 1046) {
+                gaugePS.value = data.opendlv_proxy_GroundSpeedReading.groundSpeed * 3.6;
+            }
+            if (data.dataType == 19) {
+                var c = [data.opendlv_proxy_GeodeticWgs84Reading.longitude, data.opendlv_proxy_GeodeticWgs84Reading.latitude];
+                map.setCenter(c);
+            }
+            if (data.dataType == 1055) {
+                if (!window.player) {
+                    // Create player and renderer.
+                    window.player = new Player({useWorker: true,
+                                                webgl: 'auto',
+                                                size: {
+                                                    width: data.opendlv_proxy_ImageReading.width,
+                                                    height: data.opendlv_proxy_ImageReading.height
+                                                }
+                                               });
+                    // Add element to page.
+                    var playerElement = document.getElementById("canvasForH264Frame");
+                    playerElement.appendChild(window.player.canvas);
+                    playerElement.style.visibility = "visible";
+                }
+                if (window.player) {
+                    // Mapping function to make wide chars to regular bytes.
+                    strToAB = str =>
+                     new Uint8Array(str.split('')
+                       .map(c => c.charCodeAt(0))).buffer;
+                    // Render frame.
+                    window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
+                }
+            }
+            if (data.dataType == 49) {
+                document.getElementById('ego-3dview').style.visibility = "visible";
+                // CompactPointCloud
+                var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
+
+                var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
+                var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
+                var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
+                var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
+                var numberOfPoints = distances.length / 2;
+                var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
+                var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
+
+                var GL_positions_vlp16 = particles_pointcloud_vlp16.geometry.attributes.position.array;
+                var GL_colors_vlp16 = particles_pointcloud_vlp16.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+                var GL_colors_hdl32e_12 = particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_11 = particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
+                var GL_colors_hdl32e_11 = particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_9 = particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
+                var GL_colors_hdl32e_9 = particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
+
+                // VLP16 sends 16 layers,
+                if (16 == entriesPerAzimuth) {
+                    GL_positions_vlp16.fill(0);
+                    GL_colors_vlp16.fill(0);
+                    GL_position_index_vlp16 = 0;
+                }
+                else if (12 == entriesPerAzimuth) {
+                    // HDL32e sends the sequence 12, 11, 9 layers.
+                    GL_positions_hdl32e_12.fill(0);
+                    GL_colors_hdl32e_12.fill(0);
+                    GL_position_index_hdl32e_12 = 0;
+                }
+                else if (11 == entriesPerAzimuth) {
+                    GL_positions_hdl32e_11.fill(0);
+                    GL_colors_hdl32e_11.fill(0);
+                    GL_position_index_hdl32e_11 = 0;
+                }
+                else if (9 == entriesPerAzimuth) {
+                    GL_positions_hdl32e_9.fill(0);
+                    GL_colors_hdl32e_9.fill(0);
+                    GL_position_index_hdl32e_9 = 0;
+                }
+
+                var index = 0;
+                var azimuth = startAzimuth;
+                for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
+                    for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
+                        var verticalAngle = 0;
+                        if (16 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles16[sensorIndex];
+                        }
+                        else if (12 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles12[sensorIndex];
+                        }
+                        else if (11 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles11[sensorIndex];
+                        }
+                        else if (9 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles9[sensorIndex];
+                        }
+
+                        var byte0 = distances.charCodeAt(index++);
+                        var byte1 = distances.charCodeAt(index++);
+                        var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
+
+                        var r = 0;
+                        var g = 0;
+                        var b = 1.0;
+
+                        // Extract intensity.
+                        if (0 < numberOfBitsForIntensity) {
+                            var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
+                            var extractedIntensity = distance & MASK;
+                            extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
+                            var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
+                            var intensity = extractedIntensity / intensityMaxValue;
+
+                            if ( (intensity > 1.0) || (0 > intensity) ) {
+                                intensity = 0.5;
+                            }
+
+                            // Four color levels: blue, green, yellow, red from low intensity to high intensity
+                            if (intensity < 0.25 + 1e-7) {
+                                r = 0;
+                                g = 0.5 + intensity * 2.0;
+                                b = 1;
+                            } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
+                                r = 0;
+                                g = 0.5 + intensity * 2.0;
+                                b = 0.5;
+                            } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
+                                r = 1;
+                                g = 0.75 + intensity;
+                                b = 0;
+                            } else {
+                                r = 0.55 + intensity;
+                                g = 0;
+                                b = 0;
+                            }
+
+                            // Remove intensity from distance.
+                            distance &= (0xFFFF >> numberOfBitsForIntensity);
+                        }
+
+                        distance /= 100.0;
+
+                        if (distance > 1.0) {
+                            var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
+                            var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
+                            var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
+                            var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
+
+                            if (16 == entriesPerAzimuth) {
+                                if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
+                                    GL_positions_vlp16[GL_position_index_vlp16] = x;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = r;
+                                    GL_position_index_vlp16++;
+
+                                    GL_positions_vlp16[GL_position_index_vlp16] = z;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = g;
+                                    GL_position_index_vlp16++;
+
+                                    GL_positions_vlp16[GL_position_index_vlp16] = -y;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = b;
+                                    GL_position_index_vlp16++;
+                                }
+
+                            }
+                            else if (12 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                                    GL_position_index_hdl32e_12++;
+                                }
+                            }
+                            else if (11 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
+                                    GL_position_index_hdl32e_11++;
+                                }
+                            }
+                            else if (9 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
+                                    GL_position_index_hdl32e_9++;
+                                }
+                            }
+                        }
+                    }
+                    azimuth += azimuthIncrement;
+                }
+
+                // Trigger update
+                if (16 == entriesPerAzimuth) {
+                    particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (12 == entriesPerAzimuth) {
+                    particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (11 == entriesPerAzimuth) {
+                    particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (9 == entriesPerAzimuth) {
+                    particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
+                    particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+                }
+            }
+        };
+
+        ws.onclose = function() {
+            console.log("Connection is closed...");
+        };
+
+    }
+    else {
+        // The browser doesn't support WebSocket
+        console.log("WebSocket NOT supported by your Browser!");
+    }
+
+    function clock() {
+        var date = new Date(new Date().getTime());
+        var year = date.getFullYear();
+        var month = "0" + (date.getMonth()+1);
+        var day = "0" + date.getDate();
+        var hours = date.getHours();
+        var minutes = "0" + date.getMinutes();
+        var seconds = "0" + date.getSeconds();
+
+        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+        $('#currentTime').text(formattedTime);
+        window.setTimeout(clock, 500);
+    }
+    window.setTimeout(clock, 500);
+
+    function endReplay(goLive) {
+        fetch('/endreplay', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({endReplay: true})
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                if (goLive) {
+                    window.location = "index.html";
+                }
+                else {
+                    window.location = "/recordings";
+                }
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
+
+    window.addEventListener("beforeunload", function (e) {
+        fetch('/endreplay', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({endReplay: true})
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    });
+</script>
+
+
+</body>
+</html>
+

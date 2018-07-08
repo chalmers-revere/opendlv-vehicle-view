@@ -66,6 +66,27 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+var process_cluonreplay;
+app.post('/replayfile', (req, res) => {
+    process_cluonreplay = exec('cluon-replay --cid=253 ' + req.body.recordingFileToPlay);
+    console.log('Started cluon-replay, PID: ' + process_cluonreplay.pid);
+
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
+app.post('/endreplay', (req, res) => {
+    kill(process_cluonreplay.pid);
+    console.log('Stopped cluon-replay, PID: ' + process_cluonreplay.pid);
+
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
 app.post('/deleterecordingfile', (req, res) => {
     fs.unlink(req.body.recordingFileToDelete, function() {
         res.send ({
@@ -116,12 +137,12 @@ var LIVE_OD4SESSION_CID = process.env.OD4SESSION_CID || 111;
 
 var liveOD4Session = dgram.createSocket({reuseAddr:true, type:'udp4'});
 liveOD4Session.bind(12175 /*OD4Session UDP multicast port. */);
-liveOD4Session.on('listening', function(){
+liveOD4Session.on('listening', function() {
     liveOD4Session.setBroadcast(true);
     liveOD4Session.addMembership('225.0.0.' + LIVE_OD4SESSION_CID);
 });
 
-liveOD4Session.on('message', function(msg){
+liveOD4Session.on('message', function(msg) {
     ws.clients.forEach(function each(client) {
         if (client.readyState == 1 /*WebSocket.OPEN*/) {
             client.send(msg);
@@ -135,12 +156,12 @@ var PLAYBACK_OD4SESSION_CID = 253;
 
 var playbackOD4Session = dgram.createSocket({reuseAddr:true, type:'udp4'});
 playbackOD4Session.bind(12175 /*OD4Session UDP multicast port. */);
-playbackOD4Session.on('listening', function(){
+playbackOD4Session.on('listening', function() {
     playbackOD4Session.setBroadcast(true);
     playbackOD4Session.addMembership('225.0.0.' + PLAYBACK_OD4SESSION_CID);
 });
 
-playbackOD4Session.on('message', function(msg){
+playbackOD4Session.on('message', function(msg) {
     ws.clients.forEach(function each(client) {
         if (client.readyState == 1 /*WebSocket.OPEN*/) {
             client.send(msg);
