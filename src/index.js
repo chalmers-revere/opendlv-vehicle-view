@@ -18,7 +18,7 @@ var dgram = require('dgram');
 const fs = require('fs');
 var express = require("express");
 var exphbs  = require('express-handlebars');
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 
 ////////////////////////////////////////////////////////////////////////////////
 // Killing process groups (used to stop cluon-OD4toStdout.
@@ -81,9 +81,21 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+app.post('/convertrecfile', (req, res) => {
+console.log(req.body);
+    var process_cluonrec2csv = execSync('cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.5.odvd && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
+    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
+
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
+
 var replayRunning = false;
 var process_cluonreplay;
-app.post('/replayfile', (req, res) => {
+app.post('/replayrecfile', (req, res) => {
     replayRunning = true;
     process_cluonreplay = exec('cluon-replay --cid=253 ' + req.body.recordingFileToPlay);
     console.log('[opendlv-vehicle-view] Started cluon-replay, PID: ' + process_cluonreplay.pid);
@@ -105,7 +117,7 @@ app.post('/endreplay', (req, res) => {
     });
     replayRunning = false;
 });
-app.post('/deleterecordingfile', (req, res) => {
+app.post('/deleterecfile', (req, res) => {
     fs.unlink(req.body.recordingFileToDelete, function() {
         res.send ({
             status      : "200",
