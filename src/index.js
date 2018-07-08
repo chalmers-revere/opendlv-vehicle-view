@@ -1,3 +1,18 @@
+// Copyright (C) 2018  Christian Berger
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 // Dependencies.
 var dgram = require('dgram');
 const fs = require('fs');
@@ -10,7 +25,7 @@ const { exec } = require('child_process');
 var psTree = require('ps-tree');
 
 var kill = function (pid) {
-    signal   = 'SIGKILL';
+    signal = 'SIGKILL';
     if (process.platform !== 'win32') {
         psTree(pid, function (err, children) {
             [pid].concat(
@@ -30,7 +45,7 @@ var kill = function (pid) {
 var app = express();
 var path = require('path');
 
-// Landing page.
+// Default landing page.
 app.get("/", function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
@@ -66,10 +81,12 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+var replayRunning = false;
 var process_cluonreplay;
 app.post('/replayfile', (req, res) => {
+    replayRunning = true;
     process_cluonreplay = exec('cluon-replay --cid=253 ' + req.body.recordingFileToPlay);
-    console.log('Started cluon-replay, PID: ' + process_cluonreplay.pid);
+    console.log('[opendlv-vehicle-view] Started cluon-replay, PID: ' + process_cluonreplay.pid);
 
     res.send ({
         status      : "200",
@@ -79,13 +96,14 @@ app.post('/replayfile', (req, res) => {
 });
 app.post('/endreplay', (req, res) => {
     kill(process_cluonreplay.pid);
-    console.log('Stopped cluon-replay, PID: ' + process_cluonreplay.pid);
+    console.log('[opendlv-vehicle-view] Stopped cluon-replay, PID: ' + process_cluonreplay.pid);
 
     res.send ({
         status      : "200",
         responseType: "string",
         response    : "success"
     });
+    replayRunning = false;
 });
 app.post('/deleterecordingfile', (req, res) => {
     fs.unlink(req.body.recordingFileToDelete, function() {
@@ -107,7 +125,7 @@ app.get(/^(.+)$/, function(req, res){
 // Start server.
 var port = process.env.PORT || 8081;
 var server = app.listen(port, function () {
-    console.log('Listening on port: ' + port);
+    console.log('[opendlv-vehicle-view] Listening on port: ' + port);
 })
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,33 +139,38 @@ ws.on('connection', function connection(ws) {
             var data = JSON.parse(msg);
             if (data.record) {
                 process_cluonOD4toStdout = exec('cluon-OD4toStdout --cid=111 > ./recordings/`date +CID-111-recording-%Y-%m-%d_%H%M%S.rec`');
-                console.log('Started cluon-OD4toStdout, PID: ' + process_cluonOD4toStdout.pid);
+                console.log('[opendlv-vehicle-view] Started cluon-OD4toStdout, PID: ' + process_cluonOD4toStdout.pid);
             }
             else {
                 kill(process_cluonOD4toStdout.pid);
-                console.log('Stopped cluon-OD4toStdout, PID: ' + process_cluonOD4toStdout.pid);
+                console.log('[opendlv-vehicle-view] Stopped cluon-OD4toStdout, PID: ' + process_cluonOD4toStdout.pid);
             }
         }
     });
 });
+
+var broadcastMessage = function (msg, fromLive) {
+    if ( ( (fromLive && !replayRunning) /* from live OD4Session */ ) ||
+         ( (!fromLive && replayRunning) /* from replay OD4Session */ ) ) {
+        ws.clients.forEach(function each(client) {
+            if (client.readyState == 1 /*WebSocket.OPEN*/) {
+                client.send(msg);
+            }
+        });
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Connect to live OD4Session to broadcast messages to connected websocket clients.
 var LIVE_OD4SESSION_CID = process.env.OD4SESSION_CID || 111;
 
 var liveOD4Session = dgram.createSocket({reuseAddr:true, type:'udp4'});
-liveOD4Session.bind(12175 /*OD4Session UDP multicast port. */);
+liveOD4Session.bind({ 'port' : 12175 /* OD4Session UDP multicast port */, 'address': '225.0.0.' + LIVE_OD4SESSION_CID, 'exclusive' : false });
 liveOD4Session.on('listening', function() {
-    liveOD4Session.setBroadcast(true);
     liveOD4Session.addMembership('225.0.0.' + LIVE_OD4SESSION_CID);
 });
-
-liveOD4Session.on('message', function(msg) {
-    ws.clients.forEach(function each(client) {
-        if (client.readyState == 1 /*WebSocket.OPEN*/) {
-            client.send(msg);
-        }
-    });
+liveOD4Session.on('message', function(msg, rinfo) {
+    broadcastMessage(msg, true);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -155,17 +178,11 @@ liveOD4Session.on('message', function(msg) {
 var PLAYBACK_OD4SESSION_CID = 253;
 
 var playbackOD4Session = dgram.createSocket({reuseAddr:true, type:'udp4'});
-playbackOD4Session.bind(12175 /*OD4Session UDP multicast port. */);
+playbackOD4Session.bind({ 'port' : 12175 /* OD4Session UDP multicast port */, 'address': '225.0.0.' + PLAYBACK_OD4SESSION_CID, 'exclusive' : false });
 playbackOD4Session.on('listening', function() {
-    playbackOD4Session.setBroadcast(true);
     playbackOD4Session.addMembership('225.0.0.' + PLAYBACK_OD4SESSION_CID);
 });
-
-playbackOD4Session.on('message', function(msg) {
-    ws.clients.forEach(function each(client) {
-        if (client.readyState == 1 /*WebSocket.OPEN*/) {
-            client.send(msg);
-        }
-    });
+playbackOD4Session.on('message', function(msg, rinfo) {
+    broadcastMessage(msg, false);
 });
 
