@@ -24,7 +24,8 @@ RUN echo http://dl-4.alpinelinux.org/alpine/edge/main > /etc/apk/repositories &&
 RUN apk update && \
     apk --no-cache add \
         nodejs \
-        npm
+        npm \
+        zip
 
 RUN mkdir -p /opt/vehicle-view/recordings
 
