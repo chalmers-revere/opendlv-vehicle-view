@@ -51,7 +51,7 @@
 <table cellpadding="2" width="100%">
     <tr>
         <th>
-        Download
+        Actions
         </th>
         <th>
         Name
@@ -78,25 +78,27 @@
 </div>
 
 <script>
-function deleteFile(val){
-    fetch('/deleterecordingfile', { method: 'post',
-                        headers: {
-                            'Accept': 'application/json, text/plain, */*',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({recordingFileToDelete: val})
-                       }
-    )
-    .then(function(response) {
-        if(response.ok) {
-            location.reload();
-            return;
-        }
-        throw new Error('Request failed.');
-        })
-    .catch(function(error) {
-        console.log(error);
-    });
+function deleteFile(val) {
+    if (confirm("Do you really want to delete '" + val + "'?")) {
+        fetch('/deleterecordingfile', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({recordingFileToDelete: val})
+                           }
+        )
+        .then(function(response) {
+            if(response.ok) {
+                location.reload();
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
 }
 </script>
 
