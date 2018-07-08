@@ -36,20 +36,6 @@ app.get("/", function(req, res) {
 });
 
 
-var bodyParser = require('body-parser');
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-
-app.post('/deleterecordingfile', (req, res) => {
-    fs.unlink(req.body.recordingFileToDelete, function() {
-        res.send ({
-            status: "200",
-            responseType: "string",
-            response: "success"
-        });
-    });
-});
-
 // Template engine.
 app.engine('.hbs', exphbs({extname: '.hbs'}));
 app.set('view engine', '.hbs');
@@ -58,7 +44,7 @@ app.set('view engine', '.hbs');
 const addThousandsSeparator = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
-app.get("/download", function(req, res) {
+app.get("/recordings", function(req, res) {
     var files = {
           recfiles: []
     };
@@ -74,21 +60,23 @@ app.get("/download", function(req, res) {
         });
     });
 
-    res.render('download', files);
+    res.render('recordings', files);
 });
 
-//app.get("/playback", function(req, res) {
-//    var small_data = {
-//          people: [
-//            {firstName: "Yehuda", lastName: "Katz"},
-//            {firstName: "Carl", lastName: "Lerche"},
-//            {firstName: "Alan", lastName: "Johnson"}
-//          ]
-//        };
+// Handle POST requests.
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-//    res.render('playback', small_data);
-//});
-
+app.post('/deleterecordingfile', (req, res) => {
+    fs.unlink(req.body.recordingFileToDelete, function() {
+        res.send ({
+            status: "200",
+            responseType: "string",
+            response: "success"
+        });
+    });
+});
 
 // Other static files.
 app.get(/^(.+)$/, function(req, res){ 
