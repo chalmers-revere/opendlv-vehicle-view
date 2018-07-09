@@ -102,7 +102,7 @@ var replayRunning = false;
 var process_cluonreplay;
 app.post('/replayrecfile', (req, res) => {
     replayRunning = true;
-    process_cluonreplay = exec('cluon-replay --cid=' + PLAYBACK_OD4SESSION_CID + ' ' + req.body.recordingFileToPlay);
+    process_cluonreplay = exec('cluon-replay --keeprunning --cid=' + PLAYBACK_OD4SESSION_CID + ' ' + req.body.recordingFileToPlay);
     console.log('[opendlv-vehicle-view] Started cluon-replay, PID: ' + process_cluonreplay.pid);
 
     res.send ({

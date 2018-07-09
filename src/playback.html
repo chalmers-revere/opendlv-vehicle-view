@@ -63,6 +63,93 @@
               box-shadow: 3px 3px 3px #aaaaaa;
             }
 
+            input[type=range] {
+              -webkit-appearance: none;
+              width: 100%;
+              margin: 5px 0;
+            }
+            input[type=range]:focus {
+              outline: none;
+            }
+            input[type=range]::-webkit-slider-runnable-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              background: #0598db;
+              border-radius: 1.3px;
+              border: 0.2px solid #010101;
+            }
+            input[type=range]::-webkit-slider-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+              -webkit-appearance: none;
+              margin-top: -5.2px;
+            }
+            input[type=range]:focus::-webkit-slider-runnable-track {
+              background: #0598db;
+            }
+            input[type=range]::-moz-range-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              background: #0598db;
+              border-radius: 1.3px;
+              border: 0.2px solid #010101;
+            }
+            input[type=range]::-moz-range-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+            }
+            input[type=range]::-ms-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              background: transparent;
+              border-color: transparent;
+              color: transparent;
+            }
+            input[type=range]::-ms-fill-lower {
+              background: #2a6495;
+              border: 0.2px solid #010101;
+              border-radius: 2.6px;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+            }
+            input[type=range]::-ms-fill-upper {
+              background: #0598db;
+              border: 0.2px solid #010101;
+              border-radius: 2.6px;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+            }
+            input[type=range]::-ms-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+              height: 8px;
+            }
+            input[type=range]:focus::-ms-fill-lower {
+              background: #3071a9;
+            }
+            input[type=range]:focus::-ms-fill-upper {
+              background: #367ebd;
+            }
+
+
             .elementNoShadow {
             }
 
@@ -150,6 +237,12 @@
                                     <button id="pause" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(2)" title="Pause."></button>
                                 </td>
                             </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <input type="range" min="1" max="100" value="1" class="slider" id="playbackrange">
+                                </td>
+                            </tr>
+
                         </table>
                     </center>
                 </div>
@@ -184,6 +277,15 @@
                         </td>
                         <td>
                         <div id="containerTimeStamp">-</div>
+                        </td>
+                        </tr>
+
+                        <tr>
+                        <td>
+                        Sample (Unix Epoch):
+                        </td>
+                        <td>
+                        <div id="containerTimeStampUnix">-</div>
                         </td>
                         </tr>
                     </table>
@@ -509,7 +611,7 @@ var map = new maptalks.Map("map",{
                 return;
             }
 
-            if (data.dataType > 0) {
+            if ( (data.dataType > 0) && (data.dataType != 9 /*Ignore PlayerCommand*/) && (data.dataType != 10 /*Ignore PlayerStatus*/) ) {
                 currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
 
                 var date = new Date(currentTimeStamp/1000);
@@ -522,6 +624,7 @@ var map = new maptalks.Map("map",{
 
                 var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
                 document.getElementById("containerTimeStamp").innerHTML = formattedTime;
+                document.getElementById("containerTimeStampUnix").innerHTML = currentTimeStamp + " ms";
 
                 // Do book keeping of envelopes.
                 if (!(Object.keys(data)[5] in mapOfMessages)) {
@@ -547,12 +650,23 @@ var map = new maptalks.Map("map",{
                 }
             }
 
+            if (data.dataType == 10 /*PlayerStatus*/) {
+                var total = data.cluon_data_PlayerStatus.numberOfEntries;
+                var current = data.cluon_data_PlayerStatus.currentEntryForPlayback;
+                if (total > 0) {
+                  var slider = document.getElementById("playbackrange");
+                  slider.value = current * 100 / total;
+                }
+                return;
+            }
             if (data.dataType == 1046) {
                 gaugePS.value = data.opendlv_proxy_GroundSpeedReading.groundSpeed * 3.6;
+                return;
             }
             if (data.dataType == 19) {
                 var c = [data.opendlv_proxy_GeodeticWgs84Reading.longitude, data.opendlv_proxy_GeodeticWgs84Reading.latitude];
                 map.setCenter(c);
+                return;
             }
             if (data.dataType == 1055) {
                 if (!window.player) {
@@ -577,6 +691,7 @@ var map = new maptalks.Map("map",{
                     // Render frame.
                     window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
                 }
+                return;
             }
             if (data.dataType == 49) {
                 document.getElementById('ego-3dview').style.visibility = "visible";
@@ -778,6 +893,7 @@ var map = new maptalks.Map("map",{
                     particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
                     particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
                 }
+                return;
             }
         };
 
@@ -844,10 +960,29 @@ var map = new maptalks.Map("map",{
 // Instead of sending the raw bytes, we encapsulate them into a JSON object.
 //        ws.send(strToAB(output), { binary: true });
 
-
         var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
         ws.send(commandJSON);
     }
+
+    window.addEventListener("load", function() {
+        var slider = document.getElementById("playbackrange");
+        slider.addEventListener("change", function() {
+            remotePlayerJSON = "{\"command\":3,\"seekTo\":" + (this.value/100) + "}";
+            console.log(remotePlayerJSON);
+
+            var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
+
+//            strToAB = str =>
+//              new Uint8Array(str.split('')
+//                .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//            ws.send(strToAB(output), { binary: true });
+
+            var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
+            ws.send(commandJSON);
+        });
+    });
 
     window.addEventListener("beforeunload", function (e) {
         fetch('/endreplay', { method: 'post',

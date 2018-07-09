@@ -187,6 +187,15 @@
                         <div id="containerTimeStamp">-</div>
                         </td>
                         </tr>
+
+                        <tr>
+                        <td>
+                        Sample (Unix Epoch):
+                        </td>
+                        <td>
+                        <div id="containerTimeStampUnix">-</div>
+                        </td>
+                        </tr>
                     </table>
                     </center>
                 </div>
@@ -525,6 +534,7 @@ var map = new maptalks.Map("map",{
 
                 var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
                 document.getElementById("containerTimeStamp").innerHTML = formattedTime;
+                document.getElementById("containerTimeStampUnix").innerHTML = currentTimeStamp + " ms";
 
                 // Do book keeping of envelopes.
                 if (!(Object.keys(data)[5] in mapOfMessages)) {
