@@ -534,7 +534,7 @@ var map = new maptalks.Map("map",{
 
                 var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
                 document.getElementById("containerTimeStamp").innerHTML = formattedTime;
-                document.getElementById("containerTimeStampUnix").innerHTML = currentTimeStamp + " ms";
+                document.getElementById("containerTimeStampUnix").innerHTML = Math.floor(currentTimeStamp/1000) + " ms";
 
                 // Do book keeping of envelopes.
                 if (!(Object.keys(data)[5] in mapOfMessages)) {
