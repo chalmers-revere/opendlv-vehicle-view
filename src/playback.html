@@ -136,15 +136,18 @@
                     <center>
                         <table cellpadding="2">
                             <tr>
-                                <td colspan="2">
-                                    <center>
+                                <td>
                                     <button id="endReplay" type="button" class="fas fa-power-off" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(true)" title="End replay and return to live OD4Session."></button>
-                                    </center>
+                                </td>
+                                <td>
+                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
                                 </td>
                             </tr>
                             <tr>
-                                <td>
-                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
+                                <td colspan="2">
+                                    <button id="play" type="button" class="fas fa-play" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(1)" title="Play."></button>
+                                    <button id="stepforward" type="button" class="fas fa-step-forward" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(4)" title="Step forward."></button>
+                                    <button id="pause" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(2)" title="Pause."></button>
                                 </td>
                             </tr>
                         </table>
@@ -477,8 +480,9 @@ var map = new maptalks.Map("map",{
         return xmlHttp.responseText;
     }
 
+    var ws;
     if ("WebSocket" in window) {
-        var ws = new WebSocket("ws://" + window.location.host + "/", "od4");
+        ws = new WebSocket("ws://" + window.location.host + "/", "od4");
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
@@ -829,6 +833,21 @@ var map = new maptalks.Map("map",{
         });
     }
 
+    function remotePlayer(value) {
+        var remotePlayerJSON = "{\"command\":" + value + "}";
+        var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
+
+//        strToAB = str =>
+//          new Uint8Array(str.split('')
+//            .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//        ws.send(strToAB(output), { binary: true });
+
+
+        var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
+        ws.send(commandJSON);
+    }
 
     window.addEventListener("beforeunload", function (e) {
         fetch('/endreplay', { method: 'post',
