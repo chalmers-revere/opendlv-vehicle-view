@@ -30,6 +30,15 @@
               box-sizing: border-box;
             }
 
+            .button-noborder {
+                border: none;
+                padding: 0;
+                background: none;
+                font-size:20px;
+                color:#555;
+                padding: 5px 30px;
+            }
+
             .bg {
                 background-image: url("background.jpg");
                 height: 100%; 
@@ -82,6 +91,65 @@
               z-index: 1;
             }
 
+            .overlay {
+                height: 0%;
+                width: 100%;
+                position: fixed;
+                z-index: 1;
+                top: 0;
+                left: 0;
+                background-color: rgb(0,0,0);
+                background-color: rgba(0,0,0,0.9);
+                overflow-y: hidden;
+                transition: 0.7s;
+            }
+
+            .overlay-content {
+                position: relative;
+                top: 25%;
+                width: 100%;
+                text-align: center;
+                margin-top: 30px;
+            }
+
+            .overlay a {
+                padding: 8px;
+                text-decoration: none;
+                font-size: 36px;
+                color: #818181;
+                display: block;
+                transition: 0.3s;
+            }
+
+            .overlay p {
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                padding: 8px;
+                text-decoration: none;
+                font-size: 36px;
+                color: #818181;
+                display: block;
+                transition: 0.3s;
+            }
+
+            .overlay table {
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 20px;
+                color: #818181;
+                transition: 0.3s;
+            }
+
+            .overlay a:hover, .overlay a:focus {
+                color: #f1f1f1;
+            }
+
+
+            .overlay .closebtn {
+                position: absolute;
+                top: 20px;
+                right: 45px;
+                font-size: 60px;
+            }
+
             #map { width: 220px; height: 220px;  }
 
             @media only screen and (max-width:800px) {
@@ -92,11 +160,25 @@
               .right {
                 width:100%;
               }
+              .overlay {overflow-y: auto;}
+              .overlay a {font-size: 20px}
+              .overlay .closebtn {
+                font-size: 40px;
+                top: 15px;
+                right: 35px;
+              }
             }
             @media only screen and (max-width:500px) {
               /* For mobile phones: */
               .main, .right {
                 width:100%;
+              }
+              .overlay {overflow-y: auto;}
+              .overlay a {font-size: 20px}
+              .overlay .closebtn {
+                font-size: 40px;
+                top: 15px;
+                right: 35px;
               }
             }
 
@@ -190,6 +272,67 @@
         </style>
     </head>
 
+<!----------------------------------------------------------------------------->
+
+<div id="systemLoadOverview" class="overlay">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeSystemLoadOverview()">&times;</a>
+    <div class="overlay-content">
+        <center>
+        <table cellpadding="10" id="table-systemload">
+            <thead>
+            <tr>
+               <th>Container ID</th>
+               <th>Name</th>
+               <th>Memory [%]</th>
+               <th>CPU [%]</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </center>
+    </div>
+</div>
+
+<script type="text/javascript">
+function openSystemLoadOverview() {
+    document.getElementById("systemLoadOverview").style.height = "100%";
+}
+
+function closeSystemLoadOverview() {
+    document.getElementById("systemLoadOverview").style.height = "0%";
+}
+
+var $tableSystemLoad = $('#table-systemload');
+var systemLoadSource = new EventSource('/systemloadupdates');
+systemLoadSource.addEventListener('message', function(e) {
+    console.log(e.data);
+    try {
+        var load = JSON.parse(e.data);
+        console.log(load);
+
+        $tableSystemLoad.empty(); // empty is more explicit
+
+        var $row = $('<tr>').appendTo($tableSystemLoad);
+        var $headerContainerID = $('<th>').text("Container ID").appendTo($row);
+        var $headerName = $('<th>').text("Name").appendTo($row);
+        var $headerMem = $('<th>').text("Memory [%]").appendTo($row);
+        var $headerCPU = $('<th>').text("CPU [%]").appendTo($row);
+
+        for (var k in load) {
+            $row = $('<tr>').appendTo($tableSystemLoad);
+            var $containerID = $('<td align="center">').text(load[k].container).appendTo($row);
+            var $name = $('<td align="center">').text(load[k].name).appendTo($row);
+            var $mem = $('<td align="right">').text(load[k].mem).appendTo($row);
+            var $cpu = $('<td align="right">').text(load[k].cpu).appendTo($row);
+        }
+    }
+    catch (ex) {}
+}, false);
+</script>
+
+<!----------------------------------------------------------------------------->
+
 <div class="bg">
     <div class="module">
         <header>
@@ -216,7 +359,7 @@
                             <tr>
                                 <td colspan="2">
                                     <center>
-                                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i>
+                                    <div onclick="openSystemLoadOverview()"><i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i></div>
                                     <div id="connectionStatusText">disconnected</div>
                                     </center>
                                 </td>
@@ -309,7 +452,7 @@
                 <div class="element">
                     <center>
                     <table>
-                        <tbody id="table-body">
+                        <tbody id="table-messages">
                         </tbody>
                     </table>
                     </center>
@@ -588,7 +731,7 @@ var map = new maptalks.Map("map",{
         };
 
         var mapOfMessages = {};
-        var $table = $('#table-body');
+        var $tableMessages = $('#table-messages');
         var showWarningForSenderStampNotZero = true;
         var envelopeCounter = 0;
         var currentTimeStamp = 0;
@@ -627,10 +770,10 @@ var map = new maptalks.Map("map",{
                 mapOfMessages[Object.keys(data)[5]] = mapOfMessages[Object.keys(data)[5]] + 1;
 
                 if ( 0 == (envelopeCounter % 100)) {
-                    $table.empty(); // empty is more explicit
+                    $tableMessages.empty(); // empty is more explicit
 
                     for (var k in mapOfMessages) {
-                        var $row = $('<tr>').appendTo($table);
+                        var $row = $('<tr>').appendTo($tableMessages);
 
                         var $msg = $('<td>')
                             .text(k);

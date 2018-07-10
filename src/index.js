@@ -18,7 +18,7 @@ var dgram = require('dgram');
 const fs = require('fs');
 var express = require("express");
 var exphbs  = require('express-handlebars');
-const { exec, execSync } = require('child_process');
+const { exec, execSync, spawn } = require('child_process');
 
 ////////////////////////////////////////////////////////////////////////////////
 var PORT = process.env.PORT || 8081;
@@ -42,6 +42,21 @@ var kill = function (pid) {
                 catch (e) {}
             });
         });
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Monitor load of Docker containers.
+var g_systemLoad = "";
+var monitorSystemLoad = function () {
+    try {
+        var monitorDocker = spawn('docker', ['stats', '--no-stream', '--format', '{"name":"{{.Name}}","container":"{{.Container}}","mem":"{{.MemPerc}}","cpu":"{{.CPUPerc}}"}']);
+
+        monitorDocker.stdout.on('data', function (data) {
+            g_systemLoad = data.toString();
+        });
+    } catch (e) {
+        console.log(e);
     }
 };
 
@@ -133,6 +148,26 @@ app.post('/deleterecfile', (req, res) => {
             response    : "success"
         });
     });
+});
+
+//------------------------------------------------------------------------------
+// Serve other static files.
+app.get('/systemloadupdates', function(req, res) {
+    res.writeHead(200, {
+        'Content-Type':  'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection':    'keep-alive'
+        });
+    res.write('\n');
+
+    setInterval(function() {
+        monitorSystemLoad();
+        var listOfLoads = "[" + g_systemLoad.replace(/\n/g, ',') + "]";
+        listOfLoads = listOfLoads.replace(/,]$/, ']');
+        res.write('data: ' + listOfLoads);
+        res.write('\n');
+        res.write('\n');
+    }, 5000);
 });
 
 //------------------------------------------------------------------------------
