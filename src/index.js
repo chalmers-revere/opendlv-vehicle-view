@@ -50,15 +50,21 @@ var kill = function (pid) {
 var app = express();
 var path = require('path');
 
-// Default landing page.
-app.get("/", function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'));
-});
-
-//------------------------------------------------------------------------------
 // Template engine.
 app.engine('.hbs', exphbs({extname: '.hbs'}));
 app.set('view engine', '.hbs');
+
+// Default landing page.
+app.get("/", function(req, res) {
+//    res.sendFile(path.join(__dirname + '/index.html'));
+console.log("main");
+    res.render('main', { livePage: true });
+});
+
+app.get("/playback", function(req, res) {
+console.log("playback");
+    res.render('main', { playbackPage: true });
+});
 
 //------------------------------------------------------------------------------
 // Handle existing recording files.
@@ -140,6 +146,7 @@ app.post('/deleterecfile', (req, res) => {
 //------------------------------------------------------------------------------
 // Serve other static files.
 app.get(/^(.+)$/, function(req, res){ 
+console.log("catch all: " + req.params[0]);
     res.sendFile(path.join(__dirname + '/' + req.params[0]));
 });
 

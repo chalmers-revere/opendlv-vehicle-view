@@ -13,7 +13,6 @@
 
         <script type="text/javascript" src="gauge.min.js"></script>
         <script type="text/javascript" src="maptalks.min.js"></script>
-        <script type="text/javascript" src="smoothie.min.js"></script>
 
         <script type="text/javascript" src="Decoder.js"></script>
         <script type="text/javascript" src="YUVCanvas.js"></script>
@@ -83,16 +82,6 @@
               z-index: 1;
             }
 
-            div.smoothie-chart-tooltip {
-              background: #444;
-              padding: 1em;
-              margin-top: 20px;
-              font-family: Awesome;
-              color: white;
-              font-size: 10px;
-              pointer-events: none;
-            }
-
             #map { width: 220px; height: 220px;  }
 
             @media only screen and (max-width:800px) {
@@ -110,6 +99,94 @@
                 width:100%;
               }
             }
+
+{{#if playbackPage}}
+            input[type=range] {
+              -webkit-appearance: none;
+              width: 100%;
+              margin: 5px 0;
+            }
+            input[type=range]:focus {
+              outline: none;
+            }
+            input[type=range]::-webkit-slider-runnable-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              background: #0598db;
+              border-radius: 1.3px;
+              border: 0.2px solid #010101;
+            }
+            input[type=range]::-webkit-slider-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+              -webkit-appearance: none;
+              margin-top: -5.2px;
+            }
+            input[type=range]:focus::-webkit-slider-runnable-track {
+              background: #0598db;
+            }
+            input[type=range]::-moz-range-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              background: #0598db;
+              border-radius: 1.3px;
+              border: 0.2px solid #010101;
+            }
+            input[type=range]::-moz-range-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+            }
+            input[type=range]::-ms-track {
+              width: 100%;
+              height: 8px;
+              cursor: pointer;
+              background: transparent;
+              border-color: transparent;
+              color: transparent;
+            }
+            input[type=range]::-ms-fill-lower {
+              background: #2a6495;
+              border: 0.2px solid #010101;
+              border-radius: 2.6px;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+            }
+            input[type=range]::-ms-fill-upper {
+              background: #0598db;
+              border: 0.2px solid #010101;
+              border-radius: 2.6px;
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+            }
+            input[type=range]::-ms-thumb {
+              box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+              border: 1px solid #000000;
+              height: 18px;
+              width: 16px;
+              border-radius: 6px;
+              background: #ffffff;
+              cursor: pointer;
+              height: 8px;
+            }
+            input[type=range]:focus::-ms-fill-lower {
+              background: #3071a9;
+            }
+            input[type=range]:focus::-ms-fill-upper {
+              background: #367ebd;
+            }
+{{/if}}
         </style>
     </head>
 
@@ -133,6 +210,7 @@
 
             <div class="right">
                 <div class="element">
+{{#if livePage}}
                     <center>
                         <table cellpadding="2">
                             <tr>
@@ -153,6 +231,34 @@
                             </tr>
                         </table>
                     </center>
+{{/if}}
+{{#if playbackPage}}
+                    <center>
+                        <table cellpadding="2">
+                            <tr>
+                                <td>
+                                    <button id="endReplay" type="button" class="fas fa-power-off" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(true)" title="End replay and return to live OD4Session."></button>
+                                </td>
+                                <td>
+                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <button id="play" type="button" class="fas fa-play" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(1)" title="Play."></button>
+                                    <button id="stepforward" type="button" class="fas fa-step-forward" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(4)" title="Step forward."></button>
+                                    <button id="pause" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer(2)" title="Pause."></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <input type="range" min="1" max="100" value="1" class="slider" id="playbackrange">
+                                </td>
+                            </tr>
+
+                        </table>
+                    </center>
+{{/if}}
                 </div>
 
                 <div class="element">
@@ -208,14 +314,6 @@
                     </table>
                     </center>
                 </div>
-
-<!--
-                <div class="element">
-                    <center>
-                    <canvas id="cpu-load" width="220" height="100"></canvas>
-                    </center>
-                </div>
--->
             </div>
         </div>
     </div>
@@ -395,22 +493,6 @@ gaugePS.draw();
 </script>
 
 
-<!--
-<script>
-    var dataLine = new TimeSeries();
-
-    var chart = new SmoothieChart({millisPerPixel:100,grid:{millisPerLine:3000,fillStyle:'#eee'},tooltip:true,maxValue:1000.0*1000.0,minValue:0}),
-        canvas = document.getElementById('cpu-load'),
-        line1 = dataLine;
-
-        chart.addTimeSeries(line1, {lineWidth:2,strokeStyle:'rgba(20,20,20,0.55)',fillStyle:'rgba(123,41,0,0.30)'});
-        chart.streamTo(canvas, 1237);
-
-    // Add to SmoothieChart
-    chart.addTimeSeries(dataLine);
-</script>
--->
-
 <script>
 var map = new maptalks.Map("map",{
     center : [-118.150127,33.779397],
@@ -490,15 +572,17 @@ var map = new maptalks.Map("map",{
         return xmlHttp.responseText;
     }
 
+    var ws;
     if ("WebSocket" in window) {
-        var ws = new WebSocket("ws://" + window.location.host + "/", "od4");
+        ws = new WebSocket("ws://" + window.location.host + "/", "od4");
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
-            console.log("Connected...");
+{{#if livePage}}
             document.getElementById("connectionStatusSymbol").style.color = "#3CB371";
             document.getElementById("connectionStatusText").style.color = "#3CB371";
             document.getElementById("connectionStatusText").innerHTML = "connected";
+{{/if}}
             var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.5.odvd");
             console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
         };
@@ -521,7 +605,7 @@ var map = new maptalks.Map("map",{
                 return;
             }
 
-            if (data.dataType > 0) {
+            if ( (data.dataType > 0) && (data.dataType != 9 /*Ignore PlayerCommand*/) && (data.dataType != 10 /*Ignore PlayerStatus*/) ) {
                 currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
 
                 var date = new Date(currentTimeStamp/1000);
@@ -560,12 +644,25 @@ var map = new maptalks.Map("map",{
                 }
             }
 
+{{#if playbackPage}}
+            if (data.dataType == 10 /*PlayerStatus*/) {
+                var total = data.cluon_data_PlayerStatus.numberOfEntries;
+                var current = data.cluon_data_PlayerStatus.currentEntryForPlayback;
+                if (total > 0) {
+                  var slider = document.getElementById("playbackrange");
+                  slider.value = current * 100 / total;
+                }
+                return;
+            }
+{{/if}}
             if (data.dataType == 1046) {
                 gaugePS.value = data.opendlv_proxy_GroundSpeedReading.groundSpeed * 3.6;
+                return;
             }
             if (data.dataType == 19) {
                 var c = [data.opendlv_proxy_GeodeticWgs84Reading.longitude, data.opendlv_proxy_GeodeticWgs84Reading.latitude];
                 map.setCenter(c);
+                return;
             }
             if (data.dataType == 1055) {
                 if (!window.player) {
@@ -590,6 +687,7 @@ var map = new maptalks.Map("map",{
                     // Render frame.
                     window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
                 }
+                return;
             }
             if (data.dataType == 49) {
                 document.getElementById('ego-3dview').style.visibility = "visible";
@@ -791,14 +889,16 @@ var map = new maptalks.Map("map",{
                     particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
                     particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
                 }
+                return;
             }
         };
 
         ws.onclose = function() {
-            console.log("Connection is closed...");
+{{#if livePage}}
             document.getElementById("connectionStatusText").style.color = "#555";
             document.getElementById("connectionStatusSymbol").style.color = "#555";
             document.getElementById("connectionStatusText").innerHTML = "disconnected";
+{{/if}}
         };
 
     }
@@ -807,6 +907,7 @@ var map = new maptalks.Map("map",{
         console.log("WebSocket NOT supported by your Browser!");
     }
 
+{{#if livePage}}
     $(document).ready(function(){
         $('body').on('click', 'button#record', function() {
             recording = !recording;
@@ -820,6 +921,7 @@ var map = new maptalks.Map("map",{
             }
         });
     });
+{{/if}}
 
     function clock() {
         var date = new Date(new Date().getTime());
@@ -837,12 +939,96 @@ var map = new maptalks.Map("map",{
     }
     window.setTimeout(clock, 500);
 
+{{#if playbackPage}}
+    function endReplay(goLive) {
+        fetch('/endreplay', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({endReplay: true})
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                if (goLive) {
+                    window.location = "/";
+                }
+                else {
+                    window.location = "/recordings";
+                }
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
+    function remotePlayer(value) {
+        var remotePlayerJSON = "{\"command\":" + value + "}";
+        var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
+
+//        strToAB = str =>
+//          new Uint8Array(str.split('')
+//            .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//        ws.send(strToAB(output), { binary: true });
+
+        var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
+        ws.send(commandJSON);
+    }
+
+    window.addEventListener("load", function() {
+        var slider = document.getElementById("playbackrange");
+        slider.addEventListener("change", function() {
+            remotePlayerJSON = "{\"command\":3,\"seekTo\":" + (this.value/100) + "}";
+            console.log(remotePlayerJSON);
+
+            var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
+
+//            strToAB = str =>
+//              new Uint8Array(str.split('')
+//                .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//            ws.send(strToAB(output), { binary: true });
+
+            var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
+            ws.send(commandJSON);
+        });
+    });
+{{/if}}
+
     window.addEventListener("beforeunload", function (e) {
+{{#if livePage}}
         var confirmationMessage = "Recording is ongoing that will be canceled when leaving this page.";
         if (recording) {
             (e || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage;                            //Webkit, Safari, Chrome
         }
+{{/if}}
+{{#if playbackPage}}
+        fetch('/endreplay', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({endReplay: true})
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+{{/if}}
     });
 </script>
 

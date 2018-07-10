@@ -119,7 +119,7 @@ function replayFile(filename, name) {
     )
     .then(function(response) {
         if(response.ok) {
-            window.location = "../playback.html";
+            window.location = "../playback";
             return;
         }
         throw new Error('Request failed.');
