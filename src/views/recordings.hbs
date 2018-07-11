@@ -37,7 +37,15 @@
               z-index: 2;
               padding: 0 10px;
             }
+
+            #drop_zone {
+              border: 2px dashed darkgray;
+              width:  400px;
+              height: 90px;
+            }
         </style>
+
+        <script type="text/javascript" src="js/libcluon-0.0.103.js"></script>
     </head>
 
 <div class="background-image"></div>
@@ -47,6 +55,109 @@
 <center>
 <p><button id="download" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'"></button></p>
 </center>
+
+<center>
+<div id="drop_zone">
+    <p>Optional: Drag and drop a message specification file (.odvd) here to be used instead of the OpenDLV Standard Message Set when creating the .csv export.</p>
+</div>
+{{#if hasODVD}}
+<button id="deleteExternallySuppliedODVDFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteExternallySuppliedODVDFile()" title="&nbsp;Remove provided message specification file.">Remove provided message specification file.</button>
+{{/if}}
+</center>
+
+<script>
+    function handleDragOver(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.dataTransfer.dropEffect = 'copy';
+    }
+
+    function handleFileSelect(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        var files = evt.dataTransfer.files; // FileList object.
+
+        // files is a FileList of File objects. List some properties.
+        var output = [];
+        if (1 != files.length) {
+            alert("Cannot handle more than one message specification file (.odvd).");
+        }
+        else if (1024*1024 < files[0].size) {
+            alert("Cannot handle message specification files (.odvd) that are larger than 1MB.");
+        }
+        else {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var content = reader.result;
+                var __libcluon = libcluon();
+                var res = "0";
+                try {
+                    res = __libcluon.setMessageSpecification(content);
+                }
+                catch (e) {
+                    res = "0";
+                }
+
+                if ("0" != res) {
+                    if (confirm("Do you want to upload the provided message specification file?")) {
+                        fetch('/provideodvdfile', { method: 'post',
+                                            headers: {
+                                                'Accept': 'application/json, text/plain, */*',
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({odvd: content})
+                                           }
+                        )
+                        .then(function(response) {
+                            if (response.ok) {
+                                location.reload();
+                                return;
+                            }
+                            throw new Error('Request failed.');
+                            })
+                        .catch(function(error) {
+                            console.log(error);
+                        });
+                    }
+                }
+                else {
+                    alert("Provided message specification file contained " + res + " messages.");
+                }
+            }
+
+            reader.readAsText(files[0]);
+        }
+    }
+
+    // Connect drag-and-drop listeners.
+    var dropZone = document.getElementById('drop_zone');
+    dropZone.addEventListener('dragover', handleDragOver, false);
+    dropZone.addEventListener('drop', handleFileSelect, false);
+
+function deleteExternallySuppliedODVDFile(filename, name) {
+    if (confirm("Do you really want to remove previously provided message specification file?")) {
+        fetch('/deleteodvdfile', { method: 'post',
+                                   headers: {
+                                       'Accept': 'application/json, text/plain, */*',
+                                       'Content-Type': 'application/json'
+                                   } }
+        )
+        .then(function(response) {
+            if(response.ok) {
+                location.reload();
+                return;
+            }
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+}
+
+</script>
 
 <table cellpadding="2" width="100%">
     <tr>
@@ -101,6 +212,9 @@ function convertFile(filename, name) {
             document.body.style.cursor = 'default';
             return;
         }
+        document.body.style.cursor = 'default';
+
+        alert("Failed to export .csv files (maybe the message specification file was incomplete?).");
         throw new Error('Request failed.');
         })
     .catch(function(error) {

@@ -84,14 +84,15 @@ const addThousandsSeparator = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 app.get("/recordings", function(req, res) {
-    const testFolder = './recordings';
-    var files = { recfiles: [] };
-    fs.readdirSync(testFolder).forEach(file => {
-        var size = fs.statSync(path.join(testFolder + '/' + file)).size;
+    var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
+    const recordingsFolder = './recordings';
+    var files = { hasODVD: hasExternallySuppliedODVDFile, recfiles: [] };
+    fs.readdirSync(recordingsFolder).forEach(file => {
+        var size = fs.statSync(path.join(recordingsFolder + '/' + file)).size;
         size = addThousandsSeparator(size);
         files.recfiles.push({
             "name"      : file,
-            "filename"  : testFolder + "/" + file,
+            "filename"  : recordingsFolder + "/" + file,
             "size"      : size
         });
     });
@@ -104,11 +105,35 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-app.post('/convertrecfile', (req, res) => {
-console.log(req.body);
-    var process_cluonrec2csv = execSync('cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.5.odvd && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
-    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
+app.post('/provideodvdfile', (req, res) => {
+    if (0 < req.body.odvd.length) {
+        const folder = '.';
+        fs.writeFile(path.join(folder + '/' + "external.odvd"), req.body.odvd, function(err) {
+            if (err) {
+                return console.log(err);
+            }
+        });
+    }
 
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
+app.post('/deleteodvdfile', (req, res) => {
+    fs.unlink("./external.odvd", function() {
+        res.send ({
+            status      : "200",
+            responseType: "string",
+            response    : "success"
+        });
+    });
+});
+app.post('/convertrecfile', (req, res) => {
+    var converted = false;
+    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.5.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
+    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
     res.send ({
         status      : "200",
         responseType: "string",
@@ -151,7 +176,7 @@ app.post('/deleterecfile', (req, res) => {
 });
 
 //------------------------------------------------------------------------------
-// Serve other static files.
+// Server-side update stream of Docker system load.
 app.get('/systemloadupdates', function(req, res) {
     res.writeHead(200, {
         'Content-Type':  'text/event-stream',
@@ -180,6 +205,17 @@ app.get(/^(.+)$/, function(req, res){
 // Start server.
 var server = app.listen(PORT, function () {
     console.log('[opendlv-vehicle-view] Web server listening on port: ' + PORT + ', joining live OD4Session ' + LIVE_OD4SESSION_CID + ', using OD4Session ' + PLAYBACK_OD4SESSION_CID + ' for playback.');
+
+    try {
+        // Remove potentially existing external ODVD file.
+        fs.unlink(path.join("./external.odvd"), function(){});
+    }
+    catch (e) {}
+    try {
+        // Remove potentially existing zip archives.
+        fs.unlink(path.join("./*.zip"), function(){});
+    }
+    catch (e) {}
 })
 
 ////////////////////////////////////////////////////////////////////////////////
