@@ -30,7 +30,7 @@ RUN mkdir -p /opt/vehicle-view/recordings
 
 WORKDIR /opt/vehicle-view
 RUN npm install body-parser express express-handlebars fs ps-tree ws --save --production
-COPY src/ .
+COPY webapp/ .
 
 EXPOSE 8081
 CMD ["node", "index.js"]

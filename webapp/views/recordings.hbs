@@ -53,7 +53,7 @@
 <div class="content">
 
 <center>
-<p><button id="download" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'"></button></p>
+<p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'"></button></p>
 </center>
 
 <center>
@@ -180,7 +180,7 @@ function deleteExternallySuppliedODVDFile(filename, name) {
         <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
         </td>
         <td align="left">
-        {{name}}
+        <div onclick="location.href = '../details?rec={{name}}'" onmouseover="" style="cursor: pointer;">{{name}}</div>
         </td>
         <td align="right">
         {{size}} bytes

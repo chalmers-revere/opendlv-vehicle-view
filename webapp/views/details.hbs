@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link type="text/css" rel="stylesheet" href="css/all.css"/>
+
+        <style>
+            * {
+              box-sizing: border-box;
+            }
+
+            .background-image {
+              background-image: url('background.jpg');
+              background-size: cover;
+              display: block;
+              filter: blur(5px);
+              -webkit-filter: blur(5px);
+              height: 800px;
+              left: 0;
+              position: fixed;
+              right: 0;
+              z-index: 1;
+            }
+
+            .content {
+              background: rgba(255, 255, 255, 0.35);
+              border-radius: 3px;
+              box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+              top: 10px;
+              left: 0;
+              position: fixed;
+              margin-left: 20px;
+              margin-right: 20px;
+              right: 0;
+              z-index: 2;
+              padding: 0 10px;
+            }
+        </style>
+    </head>
+
+<div class="background-image"></div>
+
+<div class="content">
+
+<center>
+<p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='/recordings'"></button></p>
+</center>
+
+<center>
+<div onclick="location.href='{{filename}}'" onmouseover="" style="cursor: pointer;"><h4>{{name}}</h4></div>
+</center>
+
+<center>
+<table cellpadding="2" width="30%">
+    <tr>
+<!--
+        <th align="left">
+        Attribute
+        </th>
+        <th>
+        Value
+        </th>
+    </tr>
+-->
+{{#each attributes}}
+    <tr>
+        <td align="left">
+        {{key}}
+        </td>
+        <td align="right">
+        {{value}}
+        </td>
+    </tr>
+{{/each}}
+</table>
+</center>
+
+</body>
+</html>
+

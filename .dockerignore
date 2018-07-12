@@ -1,7 +1,7 @@
 Dockerfile*
 README.md
 vehicle-view.png
-src/node_modules
-src/recordings
-src/CID*
+webapp/node_modules
+webapp/recordings
+webap/CID*
 .git*

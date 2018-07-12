@@ -35,7 +35,7 @@ RUN npm install body-parser express express-handlebars fs ps-tree ws --save --pr
 
 RUN [ "cross-build-end" ]
 
-COPY src/ .
+COPY webapp/ .
 
 EXPOSE 8081
 CMD ["node", "index.js"]

@@ -99,6 +99,31 @@ app.get("/recordings", function(req, res) {
     res.render('recordings', files);
 });
 
+app.get("/details", function(req, res) {
+    // Extract meta data from a rec-file.
+    var output = "";
+    try {
+        output = execSync('rec-metadataToJSON').toString();
+    }
+    catch (e) {}
+
+    output = output.trim();
+    console.log("Extracted meta data: '" + output + "'"); // Expected: { "attributes": [ { "key": "keyA", "value":"valueA"} ] }
+
+    var details = {
+        name: req.query.rec,
+        filename: './recordings/' + req.query.rec
+    };
+
+    // Concatenate meta data.
+    if ( ('{' == output[0]) && ('}' == output[output.length-1]) ) {
+        details = { ...details, ...JSON.parse(output)};
+    }
+
+    // Return details page.
+    res.render('details', details);
+});
+
 //------------------------------------------------------------------------------
 // Handle POST requests.
 var bodyParser = require('body-parser');
