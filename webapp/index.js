@@ -103,19 +103,13 @@ app.get("/details", function(req, res) {
     // Extract meta data from a rec-file.
     var output = "";
     try {
-        output = execSync('rec-metadataToJSON').toString();
+        output = execSync('rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./opendlv-standard-message-set-v0.9.5.odvd 2>/dev/null').toString();
     }
     catch (e) {}
 
     output = output.trim();
     console.log("Extracted meta data: '" + output + "'"); // Expected: { "attributes": [ { "key": "keyA", "value":"valueA"} ] }
-/*
-    var details = {
-        name: req.query.rec,
-        filename: './recordings/' + req.query.rec,
-        attributes: []
-    };
-*/
+
     var details = {
         name: req.query.rec,
         filename: './recordings/' + req.query.rec
@@ -128,7 +122,7 @@ app.get("/details", function(req, res) {
         var size = fs.statSync(path.join('./recordings/' + req.query.rec)).size;
         size = addThousandsSeparator(size);
         details.attributes.push({
-            "key"       : "size",
+            "key"       : "size:",
             "value"     : size + " bytes"
         });
     }

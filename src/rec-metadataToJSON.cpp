@@ -26,49 +26,133 @@
 // Include the message specification.
 #include "messages.hpp"
 
+#include <ctime>
+
 int32_t main(int32_t argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    std::cout << "{ \"attributes\": [ { \"key\": \"keyA\", \"value\":\"valueA\"} ] }" << std::endl;
-/*
-    // Parse the command line parameters to read the CID number that specifies an OD4Session to exchange data.
+    int32_t retCode{0};
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
-    if (0 == commandlineArguments.count("cid")) {
-        std::cerr << argv[0] << " demonstrates a small ping-pong application between C++ and JavaScript." << std::endl;
-        std::cerr << "Usage:   " << argv[0] << " --cid=<OpenDaVINCI session>" << std::endl;
-        std::cerr << "Example: " << argv[0] << " --cid=111" << std::endl;
-        return 1;
-    }
-    else {
-        // Interface to a running OpenDaVINCI session 
-        cluon::OD4Session od4{static_cast<uint16_t>(std::stoi(commandlineArguments["cid"]))};
+    if ( (0 == commandlineArguments.count("rec")) || (0 == commandlineArguments.count("odvd")) ) {
+        std::cerr << argv[0] << " extracts meta information from a given .rec file using a provided .odvd message specification as a JSON object to stdout." << std::endl;
+        std::cerr << "Usage:   " << argv[0] << " --rec=<Recording from an OD4Session> --odvd=<ODVD Message Specification>" << std::endl;
+        std::cerr << "Example: " << argv[0] << " --rec=myRecording.rec --odvd=myMessage" << std::endl;
+        retCode = 1;
+    } else {
+        cluon::MessageParser mp;
+        std::pair<std::vector<cluon::MetaMessage>, cluon::MessageParser::MessageParserErrorCodes> messageParserResult;
+        {
+            std::ifstream fin(commandlineArguments["odvd"], std::ios::in|std::ios::binary);
+            if (fin.good()) {
+                std::string input(static_cast<std::stringstream const&>(std::stringstream() << fin.rdbuf()).str()); // NOLINT
+                fin.close();
+                messageParserResult = mp.parse(input);
+                std::clog << "Found " << messageParserResult.first.size() << " messages." << std::endl;
+            }
+            else {
+                std::cerr << argv[0] << ": Message specification '" << commandlineArguments["odvd"] << "' not found." << std::endl;
+                return retCode;
+            }
+        }
 
-        // Define a callback lambda...
-        auto pong = [](cluon::data::Envelope &&env){
-            // All data exchanged in an OD4Session is sent using cluon::data::Envelope.
-            // This call is extracting the actual payload from the Envelope - in our
-            // case the example message "example::Pong".
-            example::Pong p = cluon::extractMessage<example::Pong>(std::move(env));
-            std::cout << "Received: '" << p.text() << "', " << p.number() << std::endl;
-        };
-        // ...and registering the callback for message identifier example::Pong::ID().
-        od4.dataTrigger(example::Pong::ID(), pong);
+        std::fstream fin(commandlineArguments["rec"], std::ios::in|std::ios::binary);
+        if (fin.good()) {
+            fin.close();
 
-        // Now, we define a time-triggered sending lambda.
-        uint32_t counter{0};
-        auto ping = [&od4, &counter](){
-            // Define a message...
-            example::Ping p;
-            p.number(counter).text("Hello World: " + std::to_string(counter++));
-            // and send the data.
-            od4.send(p);
-            return true;
-        };
-        // Finally, register the lambda as time-triggered function.
-        const float RUN_AT_TWO_HERTZ{2.0f};
-        od4.timeTrigger(RUN_AT_TWO_HERTZ, ping); // Won't return until stopped.
-        while (od4.isRunning()) {}
-    }
+            std::map<int32_t, cluon::MetaMessage> scope;
+            for (const auto &e : messageParserResult.first) { scope[e.messageIdentifier()] = e; }
+
+            constexpr bool AUTOREWIND{false};
+            constexpr bool THREADING{false};
+            cluon::Player player(commandlineArguments["rec"], AUTOREWIND, THREADING);
+
+            uint32_t numberOfEnvelopes{0};
+            bool timeStampFromFirstEnvelopeSet{false};
+            cluon::data::TimeStamp timeStampFromFirstEnvelope;
+            cluon::data::TimeStamp timeStampFromLastEnvelope;
+            while (player.hasMoreData()) {
+                auto next = player.getNextEnvelopeToBeReplayed();
+                if (next.first) {
+                    cluon::data::Envelope env{std::move(next.second)};
+                    if (!timeStampFromFirstEnvelopeSet) {
+                        timeStampFromFirstEnvelope = env.sampleTimeStamp();
+                        timeStampFromFirstEnvelopeSet = true;
+                    }
+                    timeStampFromLastEnvelope = env.sampleTimeStamp();
+                    numberOfEnvelopes++;
+/*
+                    if (scope.count(env.dataType()) > 0) {
+                        cluon::FromProtoVisitor protoDecoder;
+                        std::stringstream sstr(env.serializedData());
+                        protoDecoder.decodeFrom(sstr);
+
+                        cluon::MetaMessage m = scope[env.dataType()];
+                        cluon::GenericMessage gm;
+                        gm.createFrom(m, messageParserResult.first);
+                        gm.accept(protoDecoder);
+
+                        std::stringstream sstrKey;
+                        sstrKey << env.dataType() << "/" << env.senderStamp();
+                        const std::string KEY = sstrKey.str();
+
+                        std::stringstream sstrFilename;
+                        sstrFilename << m.messageName() << "-" << env.senderStamp();
+                        const std::string _FILENAME = sstrFilename.str();
+
+                        mapOfFilenames[KEY] = _FILENAME;
+                        if (mapOfEntries.count(KEY) > 0) {
+                            // Extract timestamps.
+                            std::string timeStamps;
+                            {
+                                cluon::ToCSVVisitor csv(';', false, { {1,false}, {2,false}, {3,true}, {4,true}, {5,true}, {6,false} });
+                                env.accept(csv);
+                                timeStamps = csv.csv();
+                            }
+
+                            cluon::ToCSVVisitor csv(';', false);
+                            gm.accept(csv);
+                            mapOfEntries[KEY] += stringtoolbox::split(timeStamps, '\n')[0] + csv.csv();
+                        }
+                        else {
+                            // Extract timestamps.
+                            std::vector<std::string> timeStampsWithHeader;
+                            {
+                                // Skip senderStamp (as it is in file name) and serialzedData.
+                                cluon::ToCSVVisitor csv(';', true, { {1,false}, {2,false}, {3,true}, {4,true}, {5,true}, {6,false} });
+                                env.accept(csv);
+                                timeStampsWithHeader = stringtoolbox::split(csv.csv(), '\n');
+                            }
+
+                            cluon::ToCSVVisitor csv(';', true);
+                            gm.accept(csv);
+
+                            std::vector<std::string> valuesWithHeader = stringtoolbox::split(csv.csv(), '\n');
+
+                            mapOfEntries[KEY] += timeStampsWithHeader.at(0) + valuesWithHeader.at(0) + '\n' + timeStampsWithHeader.at(1) + valuesWithHeader.at(1) + '\n';
+                        }
+                        mapOfEntrySizes[KEY] = mapOfEntries[KEY].size();
+                    }
 */
-    return 0;
+                }
+            }
+
+            time_t firstSampleTime = timeStampFromFirstEnvelope.seconds();
+            std::string strFirstSampleTime(::ctime(&firstSampleTime));
+            strFirstSampleTime = strFirstSampleTime.substr(0, strFirstSampleTime.size()-1);
+            strFirstSampleTime = stringtoolbox::trim(strFirstSampleTime);
+
+            time_t lastSampleTime = timeStampFromLastEnvelope.seconds();
+            std::string strLastSampleTime(::ctime(&lastSampleTime));
+            strLastSampleTime = strLastSampleTime.substr(0, strLastSampleTime.size()-1);
+            strLastSampleTime = stringtoolbox::trim(strLastSampleTime);
+            std::cout << "{ \"attributes\": [ "
+                      << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}"
+                      << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}"
+                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}"
+                      << " ] }" << std::endl;
+        }
+        else {
+            std::cerr << argv[0] << ": Recording '" << commandlineArguments["rec"] << "' not found." << std::endl;
+        }
+    }
+    return retCode;
 }
+
