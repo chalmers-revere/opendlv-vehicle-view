@@ -109,7 +109,13 @@ app.get("/details", function(req, res) {
 
     output = output.trim();
     console.log("Extracted meta data: '" + output + "'"); // Expected: { "attributes": [ { "key": "keyA", "value":"valueA"} ] }
-
+/*
+    var details = {
+        name: req.query.rec,
+        filename: './recordings/' + req.query.rec,
+        attributes: []
+    };
+*/
     var details = {
         name: req.query.rec,
         filename: './recordings/' + req.query.rec
@@ -118,6 +124,13 @@ app.get("/details", function(req, res) {
     // Concatenate meta data.
     if ( ('{' == output[0]) && ('}' == output[output.length-1]) ) {
         details = { ...details, ...JSON.parse(output)};
+
+        var size = fs.statSync(path.join('./recordings/' + req.query.rec)).size;
+        size = addThousandsSeparator(size);
+        details.attributes.push({
+            "key"       : "size",
+            "value"     : size + " bytes"
+        });
     }
 
     // Return details page.
