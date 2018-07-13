@@ -23,9 +23,6 @@
 // Include the single-file, header-only cluon library.
 #include "cluon-complete.hpp"
 
-// Include the message specification.
-#include "messages.hpp"
-
 #include <ctime>
 
 int32_t main(int32_t argc, char **argv) {
@@ -65,7 +62,7 @@ int32_t main(int32_t argc, char **argv) {
             cluon::Player player(commandlineArguments["rec"], AUTOREWIND, THREADING);
 
             uint32_t numberOfEnvelopes{0};
-            std::map<int32_t, uint32_t> numberOfMessagesPerType{};
+            std::map<std::string, uint32_t> numberOfMessagesPerType{};
             bool timeStampFromFirstEnvelopeSet{false};
             cluon::data::TimeStamp timeStampFromFirstEnvelope;
             cluon::data::TimeStamp timeStampFromLastEnvelope;
@@ -80,62 +77,10 @@ int32_t main(int32_t argc, char **argv) {
                     timeStampFromLastEnvelope = env.sampleTimeStamp();
                     numberOfEnvelopes++;
 
-                    if (scope.count(env.dataType()) > 0) {
-                        numberOfMessagesPerType[env.dataType()]++;
-                    }
-/*
-                    if (scope.count(env.dataType()) > 0) {
-                        cluon::FromProtoVisitor protoDecoder;
-                        std::stringstream sstr(env.serializedData());
-                        protoDecoder.decodeFrom(sstr);
-
-                        cluon::MetaMessage m = scope[env.dataType()];
-                        cluon::GenericMessage gm;
-                        gm.createFrom(m, messageParserResult.first);
-                        gm.accept(protoDecoder);
-
-                        std::stringstream sstrKey;
-                        sstrKey << env.dataType() << "/" << env.senderStamp();
-                        const std::string KEY = sstrKey.str();
-
-                        std::stringstream sstrFilename;
-                        sstrFilename << m.messageName() << "-" << env.senderStamp();
-                        const std::string _FILENAME = sstrFilename.str();
-
-                        mapOfFilenames[KEY] = _FILENAME;
-                        if (mapOfEntries.count(KEY) > 0) {
-                            // Extract timestamps.
-                            std::string timeStamps;
-                            {
-                                cluon::ToCSVVisitor csv(';', false, { {1,false}, {2,false}, {3,true}, {4,true}, {5,true}, {6,false} });
-                                env.accept(csv);
-                                timeStamps = csv.csv();
-                            }
-
-                            cluon::ToCSVVisitor csv(';', false);
-                            gm.accept(csv);
-                            mapOfEntries[KEY] += stringtoolbox::split(timeStamps, '\n')[0] + csv.csv();
-                        }
-                        else {
-                            // Extract timestamps.
-                            std::vector<std::string> timeStampsWithHeader;
-                            {
-                                // Skip senderStamp (as it is in file name) and serialzedData.
-                                cluon::ToCSVVisitor csv(';', true, { {1,false}, {2,false}, {3,true}, {4,true}, {5,true}, {6,false} });
-                                env.accept(csv);
-                                timeStampsWithHeader = stringtoolbox::split(csv.csv(), '\n');
-                            }
-
-                            cluon::ToCSVVisitor csv(';', true);
-                            gm.accept(csv);
-
-                            std::vector<std::string> valuesWithHeader = stringtoolbox::split(csv.csv(), '\n');
-
-                            mapOfEntries[KEY] += timeStampsWithHeader.at(0) + valuesWithHeader.at(0) + '\n' + timeStampsWithHeader.at(1) + valuesWithHeader.at(1) + '\n';
-                        }
-                        mapOfEntrySizes[KEY] = mapOfEntries[KEY].size();
-                    }
-*/
+                    std::stringstream sstrKey;
+                    sstrKey << env.dataType() << "/" << env.senderStamp();
+                    const std::string KEY = sstrKey.str();
+                    numberOfMessagesPerType[KEY]++;
                 }
             }
 
@@ -154,7 +99,11 @@ int32_t main(int32_t argc, char **argv) {
                       << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}";
 
             for (auto e : numberOfMessagesPerType) {
-                std::cout << ",{ \"key\": \"number of '" << scope[e.first].messageName() << "':\", \"value\":\"" << e.second << "\"}";
+                std::string tmp{stringtoolbox::split(e.first, '/').at(0)};
+                std::stringstream sstr(tmp);
+                int32_t messageID{0};
+                sstr >> messageID;
+                std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << 0 << "}";
             }
 
             std::cout << " ] }" << std::endl;
