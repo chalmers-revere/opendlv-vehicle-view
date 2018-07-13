@@ -13,6 +13,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+FROM chrberger/cluon-armhf:latest as builder
+MAINTAINER Christian Berger "christian.berger@gu.se"
+
+RUN [ "cross-build-start" ]
+
+RUN apk update && \
+    apk --no-cache add \
+        cmake \
+        make \
+        g++
+ADD . /opt/sources
+WORKDIR /opt/sources
+RUN mkdir /opt/sources/build.1 && cd /opt/sources/build.1 && cmake ../src && make && cp rec-metadataToJSON /tmp
+RUN mkdir /opt/sources/build.2 && cd /opt/sources/build.2 && cmake ../cluon-filter && make && cp cluon-filter /tmp
+
+RUN [ "cross-build-end" ]
+
+
 FROM chrberger/cluon-armhf:latest
 MAINTAINER Christian Berger "christian.berger@gu.se"
 
@@ -27,6 +45,9 @@ RUN apk update && \
         nodejs \
         npm \
         zip
+
+COPY --from=builder /tmp/rec-metadataToJSON /usr/bin
+COPY --from=builder /tmp/cluon-filter /usr/bin
 
 RUN mkdir -p /opt/vehicle-view/recordings
 
