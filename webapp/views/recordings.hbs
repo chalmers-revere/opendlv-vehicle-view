@@ -136,7 +136,7 @@
     dropZone.addEventListener('dragover', handleDragOver, false);
     dropZone.addEventListener('drop', handleFileSelect, false);
 
-function deleteExternallySuppliedODVDFile(filename, name) {
+function deleteExternallySuppliedODVDFile() {
     if (confirm("Do you really want to remove previously provided message specification file?")) {
         fetch('/deleteodvdfile', { method: 'post',
                                    headers: {
@@ -156,7 +156,6 @@ function deleteExternallySuppliedODVDFile(filename, name) {
         });
     }
 }
-
 </script>
 
 <table cellpadding="2" width="100%">

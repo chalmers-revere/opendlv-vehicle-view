@@ -100,10 +100,11 @@ app.get("/recordings", function(req, res) {
 });
 
 app.get("/details", function(req, res) {
+    var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
     // Extract meta data from a rec-file.
     var output = "";
     try {
-        output = execSync('rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./opendlv-standard-message-set-v0.9.5.odvd 2>/dev/null').toString();
+        output = execSync('if [ -f external.odvd ]; then rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./external.odvd 2>/dev/null; else rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./opendlv-standard-message-set-v0.9.5.odvd 2>/dev/null; fi').toString();
     }
     catch (e) {}
 
@@ -111,6 +112,7 @@ app.get("/details", function(req, res) {
     console.log("Extracted meta data: '" + output + "'"); // Expected: { "attributes": [ { "key": "keyA", "value":"valueA"} ] }
 
     var details = {
+        hasODVD: hasExternallySuppliedODVDFile,
         name: req.query.rec,
         filename: './recordings/' + req.query.rec
     };
