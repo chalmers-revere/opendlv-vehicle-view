@@ -65,6 +65,7 @@ int32_t main(int32_t argc, char **argv) {
             cluon::Player player(commandlineArguments["rec"], AUTOREWIND, THREADING);
 
             uint32_t numberOfEnvelopes{0};
+            std::map<int32_t, uint32_t> numberOfMessagesPerType{};
             bool timeStampFromFirstEnvelopeSet{false};
             cluon::data::TimeStamp timeStampFromFirstEnvelope;
             cluon::data::TimeStamp timeStampFromLastEnvelope;
@@ -78,6 +79,10 @@ int32_t main(int32_t argc, char **argv) {
                     }
                     timeStampFromLastEnvelope = env.sampleTimeStamp();
                     numberOfEnvelopes++;
+
+                    if (scope.count(env.dataType()) > 0) {
+                        numberOfMessagesPerType[env.dataType()]++;
+                    }
 /*
                     if (scope.count(env.dataType()) > 0) {
                         cluon::FromProtoVisitor protoDecoder;
@@ -146,8 +151,13 @@ int32_t main(int32_t argc, char **argv) {
             std::cout << "{ \"attributes\": [ "
                       << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}"
                       << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}"
-                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}"
-                      << " ] }" << std::endl;
+                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}";
+
+            for (auto e : numberOfMessagesPerType) {
+                std::cout << ",{ \"key\": \"number of '" << scope[e.first].messageName() << "':\", \"value\":\"" << e.second << "\"}";
+            }
+
+            std::cout << " ] }" << std::endl;
         }
         else {
             std::cerr << argv[0] << ": Recording '" << commandlineArguments["rec"] << "' not found." << std::endl;
