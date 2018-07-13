@@ -5,6 +5,8 @@
 
         <link type="text/css" rel="stylesheet" href="css/all.css"/>
 
+        <script type="text/javascript" src="js/jquery-3.2.1.slim.min.js"></script>
+
         <style>
             * {
               box-sizing: border-box;
@@ -80,21 +82,19 @@ function deleteExternallySuppliedODVDFile() {
 </script>
 
 <center>
-<table cellpadding="2" width="50%">
+<table cellpadding="2" width="70%">
     <tr>
-<!--
-        <th align="left">
-        Attribute
-        </th>
-        <th>
-        Value
-        </th>
-    </tr>
--->
 {{#each attributes}}
     <tr>
         <td align="left">
+{{#if selectable}}
+<input type="checkbox" id="isSelected-{{key}}" name="isSelected-{{key}}" value="{{messageID}}/{{senderStamp}}" title="Include this message in export."/>
+{{/if}}
+{{#if messageID}}
+        number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
+{{else}}
         {{key}}
+{{/if}}
         </td>
         <td align="right">
         {{value}}
@@ -103,6 +103,53 @@ function deleteExternallySuppliedODVDFile() {
 {{/each}}
 </table>
 </center>
+
+<br>
+
+<center>
+<button id="exportSelectedMessages" type="button" class="far fa-check-square" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="exportSelectedMessages()" title="Export the selected messages into a new .rec file.">&nbsp;Export the selected messages into a new .rec file.</button>
+</center>
+
+<script>
+var keepString = "";
+function exportSelectedMessages() {
+    $("input:checkbox").each(function() {
+        if ($(this).is(":checked")) {
+            if (0 == keepString.length) {
+                keepString = "--keep=" + $(this).val();
+            }
+            else {
+                keepString += "," + $(this).val();
+            }
+        }
+    });
+    if (0 != keepString.length) {
+        if (confirm("Do you really want to export the selected messages into a new .rec file?")) {
+            fetch('/exportselectedmessages', { method: 'post',
+                                               headers: {
+                                                   'Accept': 'application/json, text/plain, */*',
+                                                   'Content-Type': 'application/json'
+                                               },
+                                               body: JSON.stringify({keepString: keepString,
+                                                                     recordingFile: "{{filename}}"})
+                                             }
+            )
+            .then(function(response) {
+                if(response.ok) {
+                    var f = "{{filename}}";
+                    alert('Messages exported into ' + f.substr(0, f.lastIndexOf('.rec')) + '-selection.rec. You can find the file in the folder view.');
+                    return;
+                }
+                throw new Error('Request failed.');
+                })
+            .catch(function(error) {
+                console.log(error);
+            });
+        }
+    }
+    keepString = "";
+}
+</script>
 
 </body>
 </html>

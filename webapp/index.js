@@ -139,6 +139,17 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+app.post('/exportselectedmessages', (req, res) => {
+    var newFileName = req.body.recordingFile.substr(0, req.body.recordingFile.lastIndexOf(".rec")) + "-selection.rec";
+console.log("F = " + newFileName);
+    var process_cluonfilter = execSync('rm -f ' + newFileName + ' && cat ' + req.body.recordingFile + ' | cluon-filter ' + req.body.keepString + ' > ./' + newFileName);
+    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonfilter.pid);
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
 app.post('/provideodvdfile', (req, res) => {
     if (0 < req.body.odvd.length) {
         const folder = '.';
@@ -165,7 +176,6 @@ app.post('/deleteodvdfile', (req, res) => {
     });
 });
 app.post('/convertrecfile', (req, res) => {
-    var converted = false;
     var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.5.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
     console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
     res.send ({
