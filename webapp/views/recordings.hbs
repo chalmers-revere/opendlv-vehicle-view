@@ -38,6 +38,12 @@
               padding: 0 10px;
             }
 
+            .divScroll {
+                overflow:scroll;
+                height:600px;
+                width:90%;
+            }
+
             #drop_zone {
               border: 2px dashed darkgray;
               width:  400px;
@@ -51,6 +57,8 @@
 <div class="background-image"></div>
 
 <div class="content">
+
+<div class="divScroll">
 
 <center>
 <p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'"></button></p>
@@ -265,6 +273,9 @@ function deleteFile(filename, name) {
     }
 }
 </script>
+
+</div>
+</div>
 
 </body>
 </html>
