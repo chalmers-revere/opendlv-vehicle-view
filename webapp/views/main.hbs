@@ -386,6 +386,7 @@ systemLoadSource.addEventListener('message', function(e) {
                             </tr>
                             <tr>
                                 <td colspan="2">
+                                    <button id="replayStartOver" type="button" class="fas fa-undo-alt" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('replayStartOver')" title="Restart playback from beginning."></button>
                                     <button id="playButton" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('playButton')" title="Play/Pause."></button>
                                     <button id="stepforwardButton" type="button" class="fas fa-step-forward" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('stepForwardButton')" title="Step forward."></button>
                                 </td>
@@ -1125,7 +1126,27 @@ var map = new maptalks.Map("map",{
             commandValue = 4;
         }
 
+        if ('replayStartOver' == value) {
+            // Restart playback.
+            buttonPlayState = "play";
+            document.getElementById("playButton").className = "fas fa-pause";
+            commandValue = 1;
+
+            // Send seekTo beginning function.
+            setTimeout(function() {
+                // Seek to beginning.
+                var remotePlayerJSON = "{\"command\":3,\"seekTo\":0}";
+                var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
+                var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
+
+                ws.send(commandJSON);
+                var slider = document.getElementById("playbackrange");
+                slider.value = 1;
+            }, 300);
+        }
+
         var remotePlayerJSON = "{\"command\":" + commandValue + "}";
+
         var output = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
 
 //        strToAB = str =>
