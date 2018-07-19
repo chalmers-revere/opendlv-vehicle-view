@@ -99,11 +99,19 @@ int32_t main(int32_t argc, char **argv) {
                       << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}";
 
             for (auto e : numberOfMessagesPerType) {
-                std::string tmp{stringtoolbox::split(e.first, '/').at(0)};
-                std::stringstream sstr(tmp);
                 int32_t messageID{0};
-                sstr >> messageID;
-                std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << 0 << "}";
+                {
+                    std::string tmp{stringtoolbox::split(e.first, '/').at(0)};
+                    std::stringstream sstr(tmp);
+                    sstr >> messageID;
+                }
+                int32_t senderStamp{0};
+                {
+                    std::string tmp{stringtoolbox::split(e.first, '/').at(1)};
+                    std::stringstream sstr(tmp);
+                    sstr >> senderStamp;
+                }
+                std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << senderStamp << "}";
             }
 
             std::cout << " ] }" << std::endl;

@@ -141,9 +141,8 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 app.post('/exportselectedmessages', (req, res) => {
     var newFileName = req.body.recordingFile.substr(0, req.body.recordingFile.lastIndexOf(".rec")) + "-selection.rec";
-console.log("F = " + newFileName);
-    var process_cluonfilter = execSync('rm -f ' + newFileName + ' && cat ' + req.body.recordingFile + ' | cluon-filter ' + req.body.keepString + ' > ./' + newFileName);
-    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonfilter.pid);
+    var process_cluonfilter = execSync('rm -f ' + newFileName + ' && cat ' + req.body.recordingFile + ' | cluon-filter ' + req.body.keepString + ' > ' + newFileName);
+    console.log('[opendlv-vehicle-view] Started cluon-filter, PID: ' + process_cluonfilter.pid);
     res.send ({
         status      : "200",
         responseType: "string",

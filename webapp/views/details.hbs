@@ -39,12 +39,20 @@
               z-index: 2;
               padding: 0 10px;
             }
+
+            .divScroll {
+                overflow:scroll;
+                height:600px;
+                width:90%;
+            }
         </style>
     </head>
 
 <div class="background-image"></div>
 
 <div class="content">
+
+<div class="divScroll">
 
 <center>
 <p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='/recordings'"></button></p>
@@ -82,7 +90,7 @@ function deleteExternallySuppliedODVDFile() {
 </script>
 
 <center>
-<table cellpadding="2" width="70%">
+<table cellpadding="2" width="80%">
     <tr>
 {{#each attributes}}
     <tr>
@@ -150,6 +158,8 @@ function exportSelectedMessages() {
     keepString = "";
 }
 </script>
+
+</div>
 
 </body>
 </html>
