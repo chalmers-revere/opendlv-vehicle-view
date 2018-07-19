@@ -27,7 +27,9 @@
             }
 
             * {
-              box-sizing: border-box;
+                box-sizing: border-box;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 12px;
             }
 
             .button-noborder {
@@ -35,18 +37,30 @@
                 padding: 0;
                 background: none;
                 font-size:20px;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
                 color:#555;
                 padding: 5px 30px;
             }
-
             .bg {
                 background-image: url("background.jpg");
                 height: 100%; 
+                width: 100vw;
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
-                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-                font-size: 12px;
+                animation: zoom 20s;
+                -webkit-animation-fill-mode: forwards;
+                background-attachment: fixed;
+                position: fixed;
+                z-index: -1;
+            }
+            @keyframes zoom {
+              0% {
+                transform: scale(1, 1);
+              }
+              100% {
+                transform: scale(1.1, 1.1);
+              }
             }
 
             .main {
@@ -84,11 +98,12 @@
               background-attachment: fixed;
             }
             .module > header > h1 {
-              margin: 0;
-              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-              color: gray;
-              position: relative;
-              z-index: 1;
+                margin: 0;
+                font-size:20px;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                color: gray;
+                position: relative;
+                z-index: 1;
             }
 
             .overlay {
@@ -331,130 +346,130 @@ systemLoadSource.addEventListener('message', function(e) {
 
 <!----------------------------------------------------------------------------->
 
-<div class="bg">
-    <div class="module">
-        <header>
-            <h1>OpenDLV Vehicle View</h1>
-        </header>
-    </div>
+<div class="bg"></div>
 
-    <div>
-        <div style="overflow:auto">
-            <div class="main">
-                <div class="elementNoShadow">
-                    <center>
-                        <div id="canvasForH264Frame"></div>
-                        <div id="ego-3dview"></div>
-                    </center>
-                </div>
+<div class="module">
+    <header>
+        <h1>OpenDLV Vehicle View</h1>
+    </header>
+</div>
+
+<div>
+    <div style="overflow:auto">
+        <div class="main">
+            <div class="elementNoShadow">
+                <center>
+                    <div id="canvasForH264Frame"></div>
+                    <div id="ego-3dview"></div>
+                </center>
             </div>
+        </div>
 
-            <div class="right">
-                <div class="element">
+        <div class="right">
+            <div class="element">
 {{#if livePage}}
-                    <center>
-                        <table cellpadding="2">
-                            <tr>
-                                <td colspan="2">
-                                    <center>
-                                    <div onclick="openSystemLoadOverview()"><i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i></div>
-                                    <div id="connectionStatusText">disconnected</div>
-                                    </center>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <button id="record" type="button" class="fa fa-circle" style="font-size:20px;color:#555;padding: 5px 30px;" title="Start recording this live session."></button>
-                                </td>
-                                <td>
-                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='recordings'" title="View and handle existing recording files."></button>
-                                </td>
-                            </tr>
-                        </table>
-                    </center>
-{{/if}}
-{{#if playbackPage}}
-                    <center>
-                        <table cellpadding="2">
-                            <tr>
-                                <td>
-                                    <button id="endReplay" type="button" class="fas fa-power-off" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(true)" title="End replay and return to live OD4Session."></button>
-                                </td>
-                                <td>
-                                    <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">
-                                    <button id="replayStartOver" type="button" class="fas fa-undo-alt" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('replayStartOver')" title="Restart playback from beginning."></button>
-                                    <button id="playButton" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('playButton')" title="Play/Pause."></button>
-                                    <button id="stepforwardButton" type="button" class="fas fa-step-forward" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('stepForwardButton')" title="Step forward."></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">
-                                    <input type="range" min="1" max="100" value="1" class="slider" id="playbackrange">
-                                </td>
-                            </tr>
-
-                        </table>
-                    </center>
-{{/if}}
-                </div>
-
-                <div class="element">
-                    <center>
-                    <canvas id="speed"></canvas>
-                    </center>
-                </div>
-
-                <div class="element">
-                    <center>
-                    <div id="map"></div>
-                    </center>
-                </div>
-
-                <div class="element">
-                    <center>
+                <center>
                     <table cellpadding="2">
                         <tr>
-                        <td>
-                        Now:
-                        </td>
-                        <td>
-                        <div id="currentTime">-</div>
-                        </td>
+                            <td colspan="2">
+                                <center>
+                                <div onclick="openSystemLoadOverview()"><i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555"></i></div>
+                                <div id="connectionStatusText">disconnected</div>
+                                </center>
+                            </td>
                         </tr>
-
                         <tr>
-                        <td>
-                        Sample:
-                        </td>
-                        <td>
-                        <div id="containerTimeStamp">-</div>
-                        </td>
-                        </tr>
-
-                        <tr>
-                        <td>
-                        Sample (Unix Epoch):
-                        </td>
-                        <td>
-                        <div id="containerTimeStampUnix">-</div>
-                        </td>
+                            <td>
+                                <button id="record" type="button" class="fa fa-circle" style="font-size:20px;color:#555;padding: 5px 30px;" title="Start recording this live session."></button>
+                            </td>
+                            <td>
+                                <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='recordings'" title="View and handle existing recording files."></button>
+                            </td>
                         </tr>
                     </table>
-                    </center>
-                </div>
+                </center>
+{{/if}}
+{{#if playbackPage}}
+                <center>
+                    <table cellpadding="2">
+                        <tr>
+                            <td>
+                                <button id="endReplay" type="button" class="fas fa-power-off" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(true)" title="End replay and return to live OD4Session."></button>
+                            </td>
+                            <td>
+                                <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="endReplay(false)" title="End replay and return to view and handle existing recording files."></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <button id="replayStartOver" type="button" class="fas fa-undo-alt" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('replayStartOver')" title="Restart playback from beginning."></button>
+                                <button id="playButton" type="button" class="fas fa-pause" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('playButton')" title="Play/Pause."></button>
+                                <button id="stepforwardButton" type="button" class="fas fa-step-forward" style="font-size:20px;color:#555;padding: 5px 17px;" onclick="remotePlayer('stepForwardButton')" title="Step forward."></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <input type="range" min="1" max="100" value="1" class="slider" id="playbackrange">
+                            </td>
+                        </tr>
 
-                <div class="element">
-                    <center>
-                    <table>
-                        <tbody id="table-messages">
-                        </tbody>
                     </table>
-                    </center>
-                </div>
+                </center>
+{{/if}}
+            </div>
+
+            <div class="element">
+                <center>
+                <canvas id="speed"></canvas>
+                </center>
+            </div>
+
+            <div class="element">
+                <center>
+                <div id="map"></div>
+                </center>
+            </div>
+
+            <div class="element">
+                <center>
+                <table cellpadding="2">
+                    <tr>
+                    <td>
+                    Now:
+                    </td>
+                    <td>
+                    <div id="currentTime">-</div>
+                    </td>
+                    </tr>
+
+                    <tr>
+                    <td>
+                    Sample:
+                    </td>
+                    <td>
+                    <div id="containerTimeStamp">-</div>
+                    </td>
+                    </tr>
+
+                    <tr>
+                    <td>
+                    Sample (Unix Epoch):
+                    </td>
+                    <td>
+                    <div id="containerTimeStampUnix">-</div>
+                    </td>
+                    </tr>
+                </table>
+                </center>
+            </div>
+
+            <div class="element" id="messagesElement">
+                <center>
+                <table>
+                    <tbody id="table-messages">
+                    </tbody>
+                </table>
+                </center>
             </div>
         </div>
     </div>
@@ -729,6 +744,7 @@ var map = new maptalks.Map("map",{
         };
 
         var mapOfMessages = {};
+        document.getElementById('messagesElement').style.visibility = "hidden";
         var $tableMessages = $('#table-messages');
         var showWarningForSenderStampNotZero = true;
         var envelopeCounter = 0;
@@ -768,6 +784,8 @@ var map = new maptalks.Map("map",{
                 mapOfMessages[Object.keys(data)[5]] = mapOfMessages[Object.keys(data)[5]] + 1;
 
                 if ( 0 == (envelopeCounter % 100)) {
+                document.getElementById('messagesElement').style.visibility = "visible";
+
                     $tableMessages.empty(); // empty is more explicit
 
                     for (var k in mapOfMessages) {
