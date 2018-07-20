@@ -26,7 +26,6 @@ RUN apk update && \
 ADD . /opt/sources
 WORKDIR /opt/sources
 RUN mkdir /opt/sources/build.1 && cd /opt/sources/build.1 && cmake ../src && make && cp rec-metadataToJSON /tmp
-RUN mkdir /opt/sources/build.2 && cd /opt/sources/build.2 && cmake ../cluon-filter && make && cp cluon-filter /tmp
 
 RUN [ "cross-build-end" ]
 
@@ -47,7 +46,6 @@ RUN apk update && \
         zip
 
 COPY --from=builder /tmp/rec-metadataToJSON /usr/bin
-COPY --from=builder /tmp/cluon-filter /usr/bin
 
 RUN mkdir -p /opt/vehicle-view/recordings
 
