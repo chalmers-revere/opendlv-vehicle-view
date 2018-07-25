@@ -18,6 +18,8 @@
         <script type="text/javascript" src="js/YUVCanvas.js"></script>
         <script type="text/javascript" src="js/Player.js"></script>
 
+        <script type="text/javascript" src="js/jmuxer.min.js"></script>
+
         <script type="text/javascript" src="js/libcluon-0.0.104.js"></script>
 
         <style>
@@ -359,6 +361,10 @@ systemLoadSource.addEventListener('message', function(e) {
         <div class="main">
             <div class="elementNoShadow">
                 <center>
+
+                    <div id="container" style="width: 400px; margin: 0 auto;">
+                        <video width="400" autoplay poster="images/loader-thumb.jpg" id="player"></video>
+                    </div>
                     <div id="canvasForH264Frame"></div>
                     <div id="ego-3dview"></div>
                 </center>
@@ -707,6 +713,16 @@ var map = new maptalks.Map("map",{
 
 
 <script>
+//    document.getElementById('canvasForH264FrameJMuxer').style.visibility = "hidden";
+
+    var jmuxer = new JMuxer({
+        node: 'player',
+        mode: 'video',
+        flushingTime: 0,
+        fps: 20,
+        debug: false
+     });
+
     var GL_position_index_vlp16 = 0;
     var GL_position_index_hdl32e_12 = 0;
     var GL_position_index_hdl32e_11 = 0;
@@ -824,6 +840,7 @@ var map = new maptalks.Map("map",{
                 return;
             }
             if (data.dataType == 1055) {
+/*
                 if (!window.player) {
                     // Create player and renderer.
                     window.player = new Player({useWorker: true,
@@ -846,6 +863,19 @@ var map = new maptalks.Map("map",{
                     // Render frame.
                     window.player.decode(new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data))));
                 }
+*/
+    // Mapping function to make wide chars to regular bytes.
+
+//                document.getElementById('player').style.visibility = "visible";
+
+                strToAB = str =>
+                 new Uint8Array(str.split('')
+                   .map(c => c.charCodeAt(0))).buffer;
+                var h264Data = new Uint8Array(strToAB(window.atob(data.opendlv_proxy_ImageReading.data)));
+
+                jmuxer.feed({
+                    video: h264Data
+                });
                 return;
             }
             if (data.dataType == 49) {
