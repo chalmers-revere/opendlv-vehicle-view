@@ -110,7 +110,7 @@
                 height: 0%;
                 width: 100%;
                 position: fixed;
-                z-index: 1;
+                z-index: 10;
                 top: 0;
                 left: 0;
                 background-color: rgb(0,0,0);
@@ -284,11 +284,26 @@
               background: #367ebd;
             }
 {{/if}}
+
+            .slidingMessageViewFromTop {
+                position: absolute;
+                width: 700px;
+                height: 400px;
+                top: 1;
+                overflow: scroll;
+                background-color: #FFF; color: #000;
+                transition: all 1s;
+                z-index: 1;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 11px;
+            }
+            .slidingMessageViewFromTop.close {
+                height: 0;
+            }
         </style>
     </head>
 
 <!----------------------------------------------------------------------------->
-
 <div id="systemLoadOverview" class="overlay">
     <a href="javascript:void(0)" class="closebtn" onclick="closeSystemLoadOverview()">&times;</a>
     <div class="overlay-content">
@@ -344,8 +359,6 @@ systemLoadSource.addEventListener('message', function(e) {
 }, false);
 </script>
 
-<!----------------------------------------------------------------------------->
-
 <div class="bg"></div>
 
 <div class="module">
@@ -357,6 +370,22 @@ systemLoadSource.addEventListener('message', function(e) {
 <div>
     <div style="overflow:auto">
         <div class="main">
+
+<!----------------------------------------------------------------------------->
+            <div onclick="toggleMessageViewFromTop()"><i id="showMessages" class="fas fa-bars" style="font-size:30px;color:gray;cursor:pointer;"></i></div>
+            <div class="slidingMessageViewFromTop close">
+                <table>
+                    <tbody id="table-messages-details" align="left" valign="top">
+                    </tbody>
+                </table>
+            </div>
+            <script>
+            function toggleMessageViewFromTop() {
+                $('.slidingMessageViewFromTop').toggleClass('close');
+            }
+            </script>
+<!----------------------------------------------------------------------------->
+
             <div class="elementNoShadow">
                 <center>
                     <div id="canvasForH264Frame"></div>
@@ -467,7 +496,7 @@ systemLoadSource.addEventListener('message', function(e) {
             <div class="element" id="messagesElement">
                 <center>
                 <table>
-                    <tbody id="table-messages">
+                    <tbody id="table-messages-overview">
                     </tbody>
                 </table>
                 </center>
@@ -851,7 +880,7 @@ var map = new maptalks.Map("map",{
 
         var mapOfMessages = {};
         document.getElementById('messagesElement').style.visibility = "hidden";
-        var $tableMessages = $('#table-messages');
+        var $tableMessagesOverview = $('#table-messages-overview');
         var showWarningForSenderStampNotZero = true;
         var envelopeCounter = 0;
         var currentTimeStamp = 0;
@@ -884,21 +913,59 @@ var map = new maptalks.Map("map",{
                 document.getElementById("containerTimeStampUnix").innerHTML = Math.floor(currentTimeStamp/1000) + " ms";
 
                 // Do book keeping of envelopes.
-                if (!(Object.keys(data)[5] in mapOfMessages)) {
-                    mapOfMessages[Object.keys(data)[5]] = 0;
+                var informationAboutEnvelopesKey = data.dataType + "/" + data.senderStamp;
+                if (!(informationAboutEnvelopesKey in mapOfMessages)) {
+                    mapOfMessages[informationAboutEnvelopesKey] = { sampleTimeStamp: 0,
+                                                                    envelope: {} };
                 }
-                mapOfMessages[Object.keys(data)[5]] = mapOfMessages[Object.keys(data)[5]] + 1;
+                var informationAboutEnvelopes = mapOfMessages[informationAboutEnvelopesKey];
+                informationAboutEnvelopes.sampleTimeStamp = currentTimeStamp;
+                informationAboutEnvelopes.envelope = data;
+                mapOfMessages[informationAboutEnvelopesKey] = informationAboutEnvelopes;
 
-                if ( 0 == (envelopeCounter % 100)) {
-                document.getElementById('messagesElement').style.visibility = "visible";
+                // Update message details.
+                if ( userIsSteppingForward || (0 == (envelopeCounter % 100)) ) {
+                    var $tableMessagesDetails = $('#table-messages-details');
+                    $tableMessagesDetails.empty(); // empty is more explicit
 
-                    $tableMessages.empty(); // empty is more explicit
+                    var $row = $('<tr>').appendTo($tableMessagesDetails);
+                    $('<th>').text("ID").appendTo($row);
+                    $('<th>').text("senderStamp").appendTo($row);
+                    $('<th>').text("message name").appendTo($row);
+                    $('<th>').text("sample timestamp [µs]").appendTo($row);
+                    $('<th>').text("signal(s)").appendTo($row);
 
                     for (var k in mapOfMessages) {
-                        var $row = $('<tr>').appendTo($tableMessages);
+                        var $row = $('<tr>').appendTo($tableMessagesDetails);
+                        $('<td>').text(mapOfMessages[k].envelope.dataType).appendTo($row);
+                        $('<td>').text(mapOfMessages[k].envelope.senderStamp).appendTo($row);
+                        $('<td>').text(Object.keys(mapOfMessages[k].envelope)[5]).appendTo($row);
+                        $('<td>').text(mapOfMessages[k].sampleTimeStamp).appendTo($row);
+                        var msg = mapOfMessages[k].envelope[Object.keys(mapOfMessages[k].envelope)[5]];
 
-                        var $msg = $('<td>')
-                            .text(k);
+                        var tmp = "";
+                        for (var j in msg) {
+                            tmp += j + ": ";
+                            var v = msg[j];
+                            if ((typeof msg[j]) == 'string') {
+                                if (v.length > 10) {
+                                    v = v.substr(0, 10) + "...";
+                                }
+                            }
+                            tmp += v + "<br>";
+                        }
+                        $('<td>').html(tmp).appendTo($row);
+                    }
+                }
+                if ( 0 == (envelopeCounter % 100)) {
+                    document.getElementById('messagesElement').style.visibility = "visible";
+
+                    $tableMessagesOverview.empty(); // empty is more explicit
+
+                    for (var k in mapOfMessages) {
+                        var $row = $('<tr>').appendTo($tableMessagesOverview);
+
+                        var $msg = $('<td>').text(Object.keys(mapOfMessages[k].envelope)[5]);
 
 //                        var $qty = $('<td>')
 //                            .text(mapOfMessages[k])
@@ -1249,6 +1316,7 @@ var map = new maptalks.Map("map",{
     }
     window.setTimeout(clock, 500);
 
+    var userIsSteppingForward = false;
 {{#if playbackPage}}
     function endReplay(goLive) {
         fetch('/endreplay', { method: 'post',
@@ -1280,6 +1348,7 @@ var map = new maptalks.Map("map",{
     function remotePlayer(value) {
         var commandValue = 0;
         if ('playButton' == value) {
+            userIsSteppingForward = false;
             if ("play" == buttonPlayState) {
                 buttonPlayState = "pause";
                 document.getElementById("playButton").className = "fas fa-play";
@@ -1292,6 +1361,7 @@ var map = new maptalks.Map("map",{
             }
         }
         if ('stepForwardButton' == value) {
+            userIsSteppingForward = true;
             buttonPlayState = "pause";
             document.getElementById("playButton").className = "fas fa-play";
             commandValue = 4;
