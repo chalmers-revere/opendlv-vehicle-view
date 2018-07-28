@@ -870,7 +870,7 @@ var map = new maptalks.Map("map",{
             document.getElementById("connectionStatusText").style.color = "#3CB371";
             document.getElementById("connectionStatusText").innerHTML = "connected";
 {{/if}}
-            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.5.odvd");
+            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.6.odvd");
             console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
         };
 
@@ -1002,8 +1002,7 @@ var map = new maptalks.Map("map",{
                  new Uint8Array(str.split('')
                    .map(c => c.charCodeAt(0))).buffer;
 
-                var frameFormat = window.atob(data.opendlv_proxy_ImageReading.format);
-
+                var frameFormat = window.atob(data.opendlv_proxy_ImageReading.fourcc);
                 if ("h264" == frameFormat) {
                     if (!window.player) {
                         // Create player and renderer.

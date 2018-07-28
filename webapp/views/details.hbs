@@ -133,6 +133,7 @@ function exportSelectedMessages() {
     });
     if (0 != keepString.length) {
         if (confirm("Do you really want to export the selected messages into a new .rec file?")) {
+            document.body.style.cursor = 'wait';
             fetch('/exportselectedmessages', { method: 'post',
                                                headers: {
                                                    'Accept': 'application/json, text/plain, */*',
@@ -146,8 +147,10 @@ function exportSelectedMessages() {
                 if(response.ok) {
                     var f = "{{filename}}";
                     alert('Messages exported into ' + f.substr(0, f.lastIndexOf('.rec')) + '-selection.rec. You can find the file in the folder view.');
+                    document.body.style.cursor = 'default';
                     return;
                 }
+                document.body.style.cursor = 'default';
                 throw new Error('Request failed.');
                 })
             .catch(function(error) {

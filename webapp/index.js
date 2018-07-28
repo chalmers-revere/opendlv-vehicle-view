@@ -104,7 +104,7 @@ app.get("/details", function(req, res) {
     // Extract meta data from a rec-file.
     var output = "";
     try {
-        output = execSync('if [ -f external.odvd ]; then rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./external.odvd 2>/dev/null; else rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./opendlv-standard-message-set-v0.9.5.odvd 2>/dev/null; fi').toString();
+        output = execSync('if [ -f external.odvd ]; then rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./external.odvd 2>/dev/null; else rec-metadataToJSON --rec=./recordings/' + req.query.rec + ' --odvd=./opendlv-standard-message-set-v0.9.6.odvd 2>/dev/null; fi').toString();
     }
     catch (e) {}
 
@@ -175,7 +175,7 @@ app.post('/deleteodvdfile', (req, res) => {
     });
 });
 app.post('/convertrecfile', (req, res) => {
-    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.5.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
+    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.6.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
     console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
     res.send ({
         status      : "200",
