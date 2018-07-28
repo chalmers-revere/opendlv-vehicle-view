@@ -1,69 +1,281 @@
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        
-        <style>
-        body {
-            overflow    : hidden;
-            padding        : 0;
-            margin        : 0;
-            background-color: #BBB;
-        }
-        #info {
-            position    : absolute;
-            top        : 0px;
-            width        : 100%;
-            padding        : 5px;
-            text-align    : center;
-        }
-        #info a {
-            color        : #66F;
-            text-decoration    : none;
-        }
-        #info a:hover {
-            text-decoration    : underline;
-        }
-        #container {
-            width        : 100%;
-            height        : 100%;
-            overflow    : hidden;
-            padding        : 0;
-            margin        : 0;
-            -webkit-user-select    : none;
-            -moz-user-select    : none;
-        }
-        </style>
-    </head>
-    <body>
-        <div id="container"></div>
-        <div id="info">
-            <span id="result"></span>
-        </div> 
-        <script src="js/virtualjoystick.js"></script>
-        <script>
-            console.log("touchscreen is", VirtualJoystick.touchScreenAvailable() ? "available" : "not available");
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-            var joystick    = new VirtualJoystick({
-                container    : document.getElementById('container'),
-                mouseSupport    : true,
-            });
-            joystick.addEventListener('touchStart', function(){
-                console.log('down')
-            })
-            joystick.addEventListener('touchEnd', function(){
-                console.log('up')
-            })
-            setInterval(function(){
-                var outputEl    = document.getElementById('result');
-                outputEl.innerHTML    = '<b>Result:</b> '
-                    + ' dx:'+joystick.deltaX()
-                    + ' dy:'+joystick.deltaY()
-                    + (joystick.right()    ? ' right'    : '')
-                    + (joystick.up()    ? ' up'        : '')
-                    + (joystick.left()    ? ' left'    : '')
-                    + (joystick.down()    ? ' down'     : '')    
-            }, 1/30 * 1000);
-        </script>
-    </body>
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+        font-size: 14px;
+    }
+    body {
+        overflow: hidden;
+        padding: 0;
+        margin: 0;
+        background-color: #777;
+    }
+    #info {
+        position: absolute;
+        top: 0px;
+        width: 100%;
+        padding: 5px;
+        text-align: center;
+    }
+    #info a {
+        color: #66F;
+        text-decoration: none;
+    }
+    #container {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        padding: 0;
+        margin: 0;
+        -webkit-user-select    : none;
+        -moz-user-select    : none;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {display:none;}
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .3s;
+      transition: .3s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      -webkit-transition: .3s;
+      transition: .3s;
+    }
+
+    input:checked + .slider {
+      background-color: #3498DB;
+    }
+
+    input:focus + .slider {
+      box-shadow: 0 0 1px #3498DB;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+<div id="info">
+    <center>
+    <table>
+    <tr>
+    <td colspan=2>
+        <center>
+        <label class="switch">
+            <input type="checkbox" id="enableSending" name="enableSending" onclick="checkBoxToggled()">
+            <span class="slider round"></span>
+        </label>
+        </center>
+    </td>
+    </tr>
+    <tr>
+        <td>
+        Maximum steering angle [deg]:
+        </td>
+        <td>
+        <input id="maxSteering" name="maxSteering" type="number" min=1 max=45 value=38 />
+        </td>
+    </tr>
+    <tr>
+        <td>
+        Maximum acceleration:
+        </td>
+        <td>
+        <input id="maxAcceleration" name="maxAcceleration" type="number" min=0 max=1.0 value=0.25 />
+        </td>
+    </tr>
+    <tr>
+        <td>
+        Maximum deceleration:
+        </td>
+        <td>
+        <input id="maxDeceleration" name="maxDeceleration" type="number" min=0 max=1.0 value=1 />
+        </td>
+    </tr>
+    <tr>
+        <td>
+        Requested steering [rad]:
+        </td>
+        <td>
+        <span id="steering"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        Requested acceleration [%]:
+        </td>
+        <td>
+        <span id="acceleration"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        Requested deceleration [%]:
+        </td>
+        <td>
+        <span id="deceleration"></span>
+        </td>
+    </tr>
+    </table>
+    </center>
+</div>
+
+<script type="text/javascript" src="js/virtualjoystick.js"></script>
+<script type="text/javascript" src="js/libcluon-0.0.104.js"></script>
+
+<script>
+    function getResourceFrom(url) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", url, false /*asynchronous request*/);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+
+    var __libcluon = libcluon();
+    var ws;
+    if ("WebSocket" in window) {
+        ws = new WebSocket("ws://" + window.location.host + "/", "od4");
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = function() {
+            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.6.odvd");
+            console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
+        };
+
+        ws.onmessage = function(evt) {
+            // This method will pass an OpenDaVINCI container to libcluon to parse it into a JSON object using the provided message specification.
+            var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
+//            console.log("Data: " + data);
+        }
+
+        ws.onclose = function() {};
+    }
+    else {
+        // The browser doesn't support WebSocket
+        console.log("WebSocket NOT supported by your Browser!");
+    }
+
+    function checkBoxToggled() {
+        if (!document.getElementById("enableSending").checked) {
+            var groundSteeringRequest = "{\"groundSteering\":0}";
+            var envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
+
+            var pedalPositionRequest = "{\"position\":0}";
+            var envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(pedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
+
+            var actuationCommands = "{\"virtualjoystick\":" +
+                                        "{" +
+                                            "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
+                                            "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"" +
+                                        "}" +
+                                    "}";
+            ws.send(actuationCommands);
+        }
+
+    }
+
+    console.log("touchscreen is", VirtualJoystick.touchScreenAvailable() ? "available" : "not available");
+
+    var joystick = new VirtualJoystick({
+        container: document.getElementById('container'),
+        mouseSupport: true,
+        strokeStyle: '#3498DB',
+        limitStickTravel: true,
+    });
+    joystick.addEventListener('touchStart', function(){
+        console.log('down')
+    })
+    joystick.addEventListener('touchEnd', function(){
+        console.log('up')
+    })
+    setInterval(function(){
+        var pedalPosition = Math.floor(((-1 * joystick.deltaY())/100.0)*100.0)/100.0;
+
+        var gasPedalPosition = Math.floor(((pedalPosition > 0) ? (pedalPosition*document.getElementById("maxAcceleration").value) : 0)*100.0)/100.0;
+        var gasPedalPositionRequest = "{\"position\":" + gasPedalPosition + "}";
+        var envGasPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(gasPedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
+        var brakePedalPosition = -1 * Math.floor(((pedalPosition < 0) ? (pedalPosition*document.getElementById("maxDeceleration").value) : 0)*100.0)/100.0;
+        var brakePedalPositionRequest = "{\"position\":" + brakePedalPosition + "}";
+        var envBrakePedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(brakePedalPositionRequest, 1086 /* message identifier */, 2 /* sender stamp */);
+
+
+        var steering = Math.floor((-1 * (joystick.deltaX()/100.0) * document.getElementById("maxSteering").value * Math.PI / 180.0)*100.0)/100.0;
+        var groundSteeringRequest = "{\"groundSteering\":" + steering + "}";
+        var envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
+
+//            strToAB = str =>
+//              new Uint8Array(str.split('')
+//                .map(c => c.charCodeAt(0))).buffer;
+
+// Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//            ws.send(strToAB(output), { binary: true });
+
+        var envPedalPositionRequest = envGasPedalPositionRequest;
+        if (brakePedalPosition > 0) {
+            envPedalPositionRequest = envBrakePedalPositionRequest;
+        }
+
+        var actuationCommands = "{\"virtualjoystick\":" +
+                                    "{" +
+                                        "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
+                                        "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"" +
+                                    "}" +
+                                "}";
+
+        if (document.getElementById("enableSending").checked) {
+            ws.send(actuationCommands);
+        }
+
+        var steeringLabel = document.getElementById('steering');
+        steeringLabel.innerHTML = steering;
+
+        var accelerationLabel = document.getElementById('acceleration');
+        accelerationLabel.innerHTML = gasPedalPosition;
+
+        var decelerationLabel = document.getElementById('deceleration');
+        decelerationLabel.innerHTML = brakePedalPosition;
+    }, 1/10 /* 10Hz */ * 1000);
+</script>
+</body>
 </html>

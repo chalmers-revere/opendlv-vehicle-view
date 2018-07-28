@@ -902,14 +902,6 @@ var map = new maptalks.Map("map",{
             var data = JSON.parse(__libcluon.decodeEnvelopeToJSON(evt.data));
             envelopeCounter++;
 
-            if ( (data.dataType > 0) && (data.senderStamp > 0) ) {
-                if (showWarningForSenderStampNotZero) {
-                    showWarningForSenderStampNotZero = false;
-                    alert("Warning! OpenDLV Vehicle View does not support multiple streams for the same data type yet.");
-                }
-                return;
-            }
-
             if ( (data.dataType > 0) && (data.dataType != 9 /*Ignore PlayerCommand*/) && (data.dataType != 10 /*Ignore PlayerStatus*/) ) {
                 currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
 
@@ -990,6 +982,14 @@ var map = new maptalks.Map("map",{
                         $msg.appendTo($row);
                     }
                 }
+            }
+
+            if ( (data.dataType > 0) && (data.senderStamp > 0) ) {
+                if (showWarningForSenderStampNotZero) {
+                    showWarningForSenderStampNotZero = false;
+                    alert("Warning! OpenDLV Vehicle View does not support multiple streams for the same data type yet.");
+                }
+                return;
             }
 
 {{#if playbackPage}}
