@@ -98,6 +98,8 @@
 <div id="container"></div>
 <div id="info">
     <center>
+    <h1>OpenDLV Virtual Joystick</h1>
+    Simply use one finger to accelerate/decelerate and steer.<br><br>
     <table>
     <tr>
     <td colspan=2>
@@ -105,7 +107,7 @@
         <label class="switch">
             <input type="checkbox" id="enableSending" name="enableSending" onclick="checkBoxToggled()">
             <span class="slider round"></span>
-        </label>
+        </label><br><br>
         </center>
     </td>
     </tr>
@@ -119,18 +121,18 @@
     </tr>
     <tr>
         <td>
-        Maximum acceleration:
+        Maximum acceleration [%]:
         </td>
         <td>
-        <input id="maxAcceleration" name="maxAcceleration" type="number" min=0 max=1.0 value=0.25 />
+        <input id="maxAcceleration" name="maxAcceleration" type="number" min=0 max=100 value=25 />
         </td>
     </tr>
     <tr>
         <td>
-        Maximum deceleration:
+        Maximum deceleration [%]:
         </td>
         <td>
-        <input id="maxDeceleration" name="maxDeceleration" type="number" min=0 max=1.0 value=1 />
+        <input id="maxDeceleration" name="maxDeceleration" type="number" min=0 max=100 value=100 />
         </td>
     </tr>
     <tr>
@@ -143,7 +145,7 @@
     </tr>
     <tr>
         <td>
-        Requested acceleration [%]:
+        Requested acceleration:
         </td>
         <td>
         <span id="acceleration"></span>
@@ -151,7 +153,7 @@
     </tr>
     <tr>
         <td>
-        Requested deceleration [%]:
+        Requested deceleration:
         </td>
         <td>
         <span id="deceleration"></span>
@@ -232,12 +234,11 @@
     setInterval(function(){
         var pedalPosition = Math.floor(((-1 * joystick.deltaY())/100.0)*100.0)/100.0;
 
-        var gasPedalPosition = Math.floor(((pedalPosition > 0) ? (pedalPosition*document.getElementById("maxAcceleration").value) : 0)*100.0)/100.0;
-        var gasPedalPositionRequest = "{\"position\":" + gasPedalPosition + "}";
-        var envGasPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(gasPedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
-        var brakePedalPosition = -1 * Math.floor(((pedalPosition < 0) ? (pedalPosition*document.getElementById("maxDeceleration").value) : 0)*100.0)/100.0;
-        var brakePedalPositionRequest = "{\"position\":" + brakePedalPosition + "}";
-        var envBrakePedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(brakePedalPositionRequest, 1086 /* message identifier */, 2 /* sender stamp */);
+        var gasPedalPosition = Math.floor(((pedalPosition > 0) ? (pedalPosition*document.getElementById("maxAcceleration").value) : 0))/100.0;
+        var brakePedalPosition = Math.floor(((pedalPosition < 0) ? (pedalPosition*document.getElementById("maxDeceleration").value) : 0))/100.0;
+
+        var pedalPositionRequest = "{\"position\":" + (gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition) + "}";
+        var envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
 
 
         var steering = Math.floor((-1 * (joystick.deltaX()/100.0) * document.getElementById("maxSteering").value * Math.PI / 180.0)*100.0)/100.0;
@@ -250,11 +251,6 @@
 
 // Instead of sending the raw bytes, we encapsulate them into a JSON object.
 //            ws.send(strToAB(output), { binary: true });
-
-        var envPedalPositionRequest = envGasPedalPositionRequest;
-        if (brakePedalPosition > 0) {
-            envPedalPositionRequest = envBrakePedalPositionRequest;
-        }
 
         var actuationCommands = "{\"virtualjoystick\":" +
                                     "{" +
