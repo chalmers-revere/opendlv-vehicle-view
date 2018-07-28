@@ -375,6 +375,11 @@ systemLoadSource.addEventListener('message', function(e) {
             <div onclick="toggleMessageViewFromTop()"><i id="showMessages" class="fas fa-bars" style="font-size:30px;color:gray;cursor:pointer;"></i></div>
             <div class="slidingMessageViewFromTop close">
                 <table>
+{{#if useExternallySuppliedODVDFile}}
+                    The messages below are resolved using a user-supplied message specification file (you can remove it on the folder view).<br>
+{{else}}
+                    The messages below are resolved using the OpenDLV Standard Message Set (you can supply a different one on the folder view).<br>
+{{/if}}
                     <tbody id="table-messages-details" align="left" valign="top">
                     </tbody>
                 </table>
@@ -870,8 +875,13 @@ var map = new maptalks.Map("map",{
             document.getElementById("connectionStatusText").style.color = "#3CB371";
             document.getElementById("connectionStatusText").innerHTML = "connected";
 {{/if}}
-            var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.6.odvd");
-            console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
+{{#if useExternallySuppliedODVDFile}}
+            var odvdFile = "external.odvd";
+{{else}}
+            var odvdFile = "opendlv-standard-message-set-v0.9.6.odvd";
+{{/if}}
+            var odvd = getResourceFrom(odvdFile);
+            console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification '" + odvdFile + "'.");
         };
 
         var vpxDecoderInitialized = false;

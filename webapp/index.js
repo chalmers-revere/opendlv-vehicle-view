@@ -71,11 +71,15 @@ app.set('view engine', '.hbs');
 
 // Default landing page.
 app.get("/", function(req, res) {
-    res.render('main', { livePage: true });
+    var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
+    res.render('main', { livePage: true,
+                         useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile });
 });
 
 app.get("/playback", function(req, res) {
-    res.render('main', { playbackPage: true });
+    var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
+    res.render('main', { playbackPage: true,
+                         useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile });
 });
 
 //------------------------------------------------------------------------------
