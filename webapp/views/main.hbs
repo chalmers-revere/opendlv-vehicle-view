@@ -955,14 +955,17 @@ var map = new maptalks.Map("map",{
 
                         var tmp = "";
                         for (var j in msg) {
-                            tmp += j + ": ";
                             var v = msg[j];
+                            tmp += j;
                             if ((typeof msg[j]) == 'string') {
                                 if (v.length > 10) {
-                                    v = v.substr(0, 10) + "...";
+                                    v = " (base64) " + v.substr(0, 10) + "...";
+                                }
+                                else {
+                                    v = window.atob(v);
                                 }
                             }
-                            tmp += v + "<br>";
+                            tmp += ": " + v + "<br>";
                         }
                         $('<td>').html(tmp).appendTo($row);
                     }
