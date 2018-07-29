@@ -179,7 +179,7 @@
 </div>
 
 <script type="text/javascript" src="js/virtualjoystick.js"></script>
-<script type="text/javascript" src="js/libcluon-0.0.104.js"></script>
+<script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
 
 <script>
     function showParameters() {
@@ -270,10 +270,10 @@
 
         if (!document.getElementById("enableSending").checked) {
             var groundSteeringRequest = "{\"groundSteering\":0}";
-            var envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
+            var envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
 
             var pedalPositionRequest = "{\"position\":0}";
-            var envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(pedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
+            var envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 1 /* sender stamp */);
 
             var actuationCommands = "{\"virtualjoystick\":" +
                                         "{" +
@@ -306,12 +306,12 @@
             var brakePedalPosition = Math.floor(((pedalPosition < 0) ? (pedalPosition*Number(document.getElementById("maxDeceleration").value)) : 0))/100.0;
 
             var pedalPositionRequest = "{\"position\":" + (gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition) + "}";
-            envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
+            envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
 
 
             var steering = Math.floor((-1 * (joystick.deltaX()/100.0) * Number(document.getElementById("maxSteering").value) * Math.PI / 180.0)*100.0)/100.0;
             var groundSteeringRequest = "{\"groundSteering\":" + steering + "}";
-            envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
+            envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
         }
 
         // Support for legacy ActuationRequest.
@@ -336,7 +336,7 @@
             acceleration = Math.floor(acceleration * 4.0)/4.0;
 
             var actuationRequest = "{\"acceleration\":" + acceleration + ",\"steering\":" + steering + ",\"isValid\":" + true + "}";
-            envActuationRequest = __libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(actuationRequest, 160 /* message identifier */, 0 /* sender stamp */);
+            envActuationRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(actuationRequest, 160 /* message identifier */, 0 /* sender stamp */);
 
 //            strToAB = str =>
 //              new Uint8Array(str.split('')
