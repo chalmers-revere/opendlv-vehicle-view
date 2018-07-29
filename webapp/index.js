@@ -89,8 +89,10 @@ const addThousandsSeparator = (x) => {
 }
 app.get("/recordings", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
+    var platform = process.arch.toString();
+    var isX64 = platform == "x64";
     const recordingsFolder = './recordings';
-    var files = { hasODVD: hasExternallySuppliedODVDFile, recfiles: [] };
+    var files = { hasODVD: hasExternallySuppliedODVDFile, isX64: isX64, recfiles: [] };
     fs.readdirSync(recordingsFolder).forEach(file => {
         var size = fs.statSync(path.join(recordingsFolder + '/' + file)).size;
         size = addThousandsSeparator(size);
@@ -178,8 +180,20 @@ app.post('/deleteodvdfile', (req, res) => {
         });
     });
 });
-app.post('/convertrecfile', (req, res) => {
+app.post('/convertrec2csv', (req, res) => {
     var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.6.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv && rm -f *.csv');
+    console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
+    res.send ({
+        status      : "200",
+        responseType: "string",
+        response    : "success"
+    });
+});
+
+app.post('/convertrec2csvpng', (req, res) => {
+    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else docker run --rm -v $PWD:/opt/data -w /opt/data t --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.6.odvd; fi && zip -r9 ./' + req.body.recordingFile + '.csv.zip *.csv opendlv.proxy.ImageReading*');
+// TODO: Test in Docker.
+//    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && if [ -f external.odvd ]; then cluon-rec2csv --rec=' + req.body.recordingFileToConvert + ' --odvd=external.odvd; else docker run --rm -v $PWD:/opt/data -w /opt/data t --rec=' + req.body.recordingFileToConvert + ' --odvd=opendlv-standard-message-set-v0.9.6.odvd; fi && zip ./' + req.body.recordingFile + '.csv.zip *.csv opendlv.proxy.ImageReading* && rm -fr *.csv opendlv.proxy.ImageReading*');
     console.log('[opendlv-vehicle-view] Started cluon-rec2csv, PID: ' + process_cluonrec2csv.pid);
     res.send ({
         status      : "200",

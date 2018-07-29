@@ -189,7 +189,7 @@ function deleteExternallySuppliedODVDFile() {
         <th onclick="sortTable(1)" style="cursor: pointer;">
         Name
         </th>
-        <th onclick="sortTable(2)" style="cursor: pointer;">
+        <th>
         Size
         </th>
     </tr>
@@ -197,7 +197,11 @@ function deleteExternallySuppliedODVDFile() {
     <tr>
         <td align="center">
         <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
-        <button id="download-csv-{{name}}" type="button" class="far fa-file-archive" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
+        <button id="download-csv-{{name}}" type="button" class="far fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
+{{../platform}}
+{{#if ../isX64}}
+        <button id="download-csvpng-{{name}}" type="button" class="far fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
+{{/if}}
         <button id="playFile" type="button" class="far fa-play-circle" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
         <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
         </td>
@@ -274,7 +278,7 @@ function convertFile(filename, name) {
     document.getElementById('download-csv-' + name).style.color = "#555";
     document.body.style.cursor = 'wait';
 
-    fetch('/convertrecfile', { method: 'post',
+    fetch('/convertrec2csv', { method: 'post',
                         headers: {
                             'Accept': 'application/json, text/plain, */*',
                             'Content-Type': 'application/json'
@@ -298,6 +302,39 @@ function convertFile(filename, name) {
     .catch(function(error) {
         console.log(error);
     });
+}
+
+function convertFilePNG(filename, name) {
+    if (confirm("Converting a .rec file into .csv/.png files can take several minutes. Do you want to continue?")) {
+        document.getElementById('download-csvpng-' + name).disabled = true;
+        document.getElementById('download-csvpng-' + name).style.color = "#555";
+        document.body.style.cursor = 'wait';
+
+        fetch('/convertrec2csvpng', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({recordingFileToConvert: filename, recordingFile: name })
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                window.location = "../" + name + ".csv.zip";
+                document.getElementById('download-csvpng-' + name).disabled = false;
+                document.getElementById('download-csvpng-' + name).style.color = "#3498DB";
+                document.body.style.cursor = 'default';
+                return;
+            }
+            document.body.style.cursor = 'default';
+
+            alert("Failed to export .csv/.png files (maybe the message specification file was incomplete?).");
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
 }
 
 function replayFile(filename, name) {
