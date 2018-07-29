@@ -272,34 +272,39 @@ const WebSocket = require('ws').Server;
 const g_ws = new WebSocket({server});
 g_ws.on('connection', function connection(conn) {
     conn.on('message', function(msg) {
-        if ( /* Ensure we have pure JSON. */ (msg[0] == '{') && (msg[msg.length-1] == '}') ) {
-            var data = JSON.parse(msg);
-            Object.keys(data).forEach(function(key) {
-                if ('record' == key) {
-                    if (data.record) {
-                        g_cluonOD4toStdout = exec('cluon-OD4toStdout --cid=' + LIVE_OD4SESSION_CID + ' > ./recordings/`date +CID-' + LIVE_OD4SESSION_CID + '-recording-%Y-%m-%d_%H%M%S.rec`');
-                        console.log('[opendlv-vehicle-view] Started cluon-OD4toStdout, PID: ' + g_cluonOD4toStdout.pid);
+        try {
+            if ( /* Ensure we have pure JSON. */ (msg[0] == '{') && (msg[msg.length-1] == '}') ) {
+                var data = JSON.parse(msg);
+                Object.keys(data).forEach(function(key) {
+                    if ('record' == key) {
+                        if (data.record) {
+                            g_cluonOD4toStdout = exec('cluon-OD4toStdout --cid=' + LIVE_OD4SESSION_CID + ' > ./recordings/`date +CID-' + LIVE_OD4SESSION_CID + '-recording-%Y-%m-%d_%H%M%S.rec`');
+                            console.log('[opendlv-vehicle-view] Started cluon-OD4toStdout, PID: ' + g_cluonOD4toStdout.pid);
+                        }
+                        else {
+                            try { kill(g_cluonOD4toStdout.pid); } catch (e) { console.log(e); }
+                            console.log('[opendlv-vehicle-view] Stopped cluon-OD4toStdout, PID: ' + g_cluonOD4toStdout.pid);
+                        }
                     }
-                    else {
-                        try { kill(g_cluonOD4toStdout.pid); } catch (e) { console.log(e); }
-                        console.log('[opendlv-vehicle-view] Stopped cluon-OD4toStdout, PID: ' + g_cluonOD4toStdout.pid);
+                    if ('remoteplayback' == key) {
+                        // Unpack Proto-encoded Envelope and forward command to playback OD4Session.
+                        g_playbackOD4Session.send(Buffer.from(data.remoteplayback, 'base64'), 12175, '225.0.0.' + PLAYBACK_OD4SESSION_CID);
                     }
-                }
-                if ('remoteplayback' == key) {
-                    // Unpack Proto-encoded Envelope and forward command to playback OD4Session.
-                    g_playbackOD4Session.send(Buffer.from(data.remoteplayback, 'base64'), 12175, '225.0.0.' + PLAYBACK_OD4SESSION_CID);
-                }
-                if ('virtualjoystick' == key) {
-                    // Unpack Proto-encoded Envelopes...
-                    var envPedalPositionRequest = Buffer.from(data.virtualjoystick.pedalPositionRequest, 'base64');
-                    var envGroundSteeringRequest = Buffer.from(data.virtualjoystick.groundSteeringRequest, 'base64');
+                    if ('virtualjoystick' == key) {
+                        // Unpack Proto-encoded Envelopes...
+                        var envPedalPositionRequest = Buffer.from(data.virtualjoystick.pedalPositionRequest, 'base64');
+                        var envGroundSteeringRequest = Buffer.from(data.virtualjoystick.groundSteeringRequest, 'base64');
+                        var envActuationRequest = Buffer.from(data.virtualjoystick.actuationRequest, 'base64');
 
-                    // ...and forward command to live OD4Session.
-                    g_liveOD4Session.send(envPedalPositionRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
-                    g_liveOD4Session.send(envGroundSteeringRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
-                }
-            });
+                        // ...and forward command to live OD4Session.
+                        g_liveOD4Session.send(envPedalPositionRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
+                        g_liveOD4Session.send(envGroundSteeringRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
+                        g_liveOD4Session.send(envActuationRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
+                    }
+                });
+            }
         }
+        catch (e) {}
     });
 });
 

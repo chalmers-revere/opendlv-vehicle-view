@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+// These messages are necessary to control the remote player.
 message cluon.data.PlayerCommand [id = 9] {
     uint8 command [id = 1]; // 0 = nothing, 1 = play, 2 = pause, 3 = seekTo, 4 = step
     float seekTo [id = 2];
@@ -26,6 +27,15 @@ message cluon.data.PlayerStatus [id = 10] {
     uint32 numberOfEntries [id = 2];
     uint32 currentEntryForPlayback [id = 3];
 }
+
+// This message is a legacy one to support controlling Snowfox and Rhino.
+message opendlv.proxy.ActuationRequest [id = 160] {
+  float acceleration [id = 1];
+  float steering [id = 2];
+  bool isValid [id = 3];
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 message opendlv.sim.Frame [id = 1001] {
   float x [id = 1];
