@@ -49,10 +49,107 @@
               width:  400px;
               height: 90px;
             }
+
+            .slidingMessageViewFromTop {
+                position: fixed;
+                top: 15%;
+                left: 20%;
+                width: 700px;
+                height: 500px;
+                overflow: scroll;
+                background-color: #FFF; color: #000;
+                transition: all 1s;
+                z-index: 10;
+                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+                font-size: 13px;
+            }
+            .slidingMessageViewFromTop.close {
+                height: 0;
+            }
         </style>
 
+        <script type="text/javascript" src="js/jquery-3.2.1.slim.min.js"></script>
         <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
     </head>
+
+{{#if isX64}}
+<div class="slidingMessageViewFromTop close">
+    <table>
+This functionality is processing the given .rec file to convert the contained messages into corresponding .csv files and decodes any contained video data (h264, VP8, or VP9) into .png files.<br>
+<br>
+Video processing for h264-encoded frames is realized using the "OpenH264 Video Codec provided by Cisco Systems, Inc.". The usage of this codec is subject to the license conditions as shown below.<br>
+<br>
+-------------------------------------------------------<br>
+About The Cisco-Provided Binary of OpenH264 Video Codec<br>
+-------------------------------------------------------<br>
+<br>
+Cisco provides this program under the terms of the BSD license.  <br>
+<br><br>
+Additionally, this binary is licensed under Cisco’s AVC/H.264 Patent Portfolio License from MPEG LA, at no cost to you, provided that the requirements and conditions shown below in the AVC/H.264 Patent Portfolio sections are met.  <br>
+<br>
+As with all AVC/H.264 codecs, you may also obtain your own patent license from MPEG LA or from the individual patent owners, or proceed at your own risk.  Your rights from Cisco under the BSD license are not affected by this choice.  <br>
+<br>
+For more information on the OpenH264 binary licensing, please see the OpenH264 FAQ found at http://www.openh264.org/faq.html#binary <br>
+<br>
+A corresponding source code to this binary program is available under the same BSD terms, which can be found at http://www.openh264.org<br>
+<br>
+-----------<br>
+BSD License<br>
+-----------<br>
+<br>
+Copyright © 2014 Cisco Systems, Inc.<br>
+<br>
+All rights reserved.<br>
+<br>
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:<br>
+<br>
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.<br>
+<br>
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.<br>
+<br>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br>
+<br>
+-----------------------------------------<br>
+AVC/H.264 Patent Portfolio License Notice<br>
+-----------------------------------------<br>
+<br>
+The binary form of this Software is distributed by Cisco under the AVC/H.264 Patent Portfolio License from MPEG LA, and is subject to the following requirements, which may or may not be applicable to your use of this software: <br>
+<br>
+THIS PRODUCT IS LICENSED UNDER THE AVC PATENT PORTFOLIO LICENSE FOR THE PERSONAL USE OF A CONSUMER OR OTHER USES IN WHICH IT DOES NOT RECEIVE REMUNERATION TO (i) ENCODE VIDEO IN COMPLIANCE WITH THE AVC STANDARD (“AVC VIDEO”) AND/OR (ii) DECODE AVC VIDEO THAT WAS ENCODED BY A CONSUMER ENGAGED IN A PERSONAL ACTIVITY AND/OR WAS OBTAINED FROM A VIDEO PROVIDER LICENSED TO PROVIDE AVC VIDEO.  NO LICENSE IS GRANTED OR SHALL BE IMPLIED FOR ANY OTHER USE.  ADDITIONAL INFORMATION MAY BE OBTAINED FROM MPEG LA, L.L.C. SEE HTTP://WWW.MPEGLA.COM<br>
+<br>
+Accordingly, please be advised that content providers and broadcasters using AVC/H.264 in their service may be required to obtain a separate use license from MPEG LA, referred to as "(b) sublicenses" in the SUMMARY OF AVC/H.264 LICENSE TERMS from MPEG LA found at http://www.openh264.org/mpegla<br>
+<br>
+---------------------------------------------<br>
+AVC/H.264 Patent Portfolio License Conditions<br>
+---------------------------------------------<br>
+<br>
+In addition, the Cisco-provided binary of this Software is licensed under Cisco's license from MPEG LA only if the following conditions are met:<br>
+<br>
+1. The Cisco-provided binary is separately downloaded to an end user’s device, and not integrated into or combined with third party software prior to being downloaded to the end user’s device;<br>
+<br>
+2. The end user must have the ability to control (e.g., to enable, disable, or re-enable) the use of the Cisco-provided binary;<br>
+<br>
+3. Third party software, in the location where end users can control the use of the Cisco-provided binary, must display the following text:<br>
+<br>
+       "OpenH264 Video Codec provided by Cisco Systems, Inc."<br>
+<br>
+4.  Any third-party software that makes use of the Cisco-provided binary must reproduce all of the above text, as well as this last condition, in the EULA and/or in another location where licensing information is to be presented to the end user.  <br>
+ <br>
+<br>
+<br>
+                          v1.0<br>
+</table>
+<center>
+<button id="openh264-okay" type="button" class="fas fa-check" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="acceptopenh264License()">&nbsp;accept</button>
+<button id="openh264-cancel" type="button" class="fas fa-ban" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="toggleMessageViewFromTop()">&nbsp;cancel</button>
+</center>
+</div>
+<script>
+function toggleMessageViewFromTop() {
+    $('.slidingMessageViewFromTop').toggleClass('close');
+}
+</script>
+{{/if}}
 
 <div class="background-image"></div>
 
@@ -198,9 +295,10 @@ function deleteExternallySuppliedODVDFile() {
         <td align="center">
         <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
         <button id="download-csv-{{name}}" type="button" class="far fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
-{{../platform}}
 {{#if ../isX64}}
         <button id="download-csvpng-{{name}}" type="button" class="far fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
+{{else}}
+        <button id="download-csvpng-{{name}}" type="button" class="far fa-file-download" style="font-size:20px;color:#555;padding: 5px 30px;disabled" title="Converting {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file not supported on non-x86_64 platforms.">&nbsp;<strike>.csv/.png</strike></button>
 {{/if}}
         <button id="playFile" type="button" class="far fa-play-circle" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
         <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
@@ -304,7 +402,29 @@ function convertFile(filename, name) {
     });
 }
 
+{{#if isX64}}
+var filename_convertFilePNG = "";
+var name_convertFilePNG = "";
 function convertFilePNG(filename, name) {
+    filename_convertFilePNG = filename;
+    name_convertFilePNG = name;
+
+    if (document.cookie.replace(/(?:(?:^|.*;\s*)hasShownLicenseForopenh264\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
+        toggleMessageViewFromTop();
+    }
+    else {
+        convertFilePNGInternal(filename_convertFilePNG, name_convertFilePNG);
+    }
+}
+
+function acceptopenh264License() {
+    toggleMessageViewFromTop();
+    document.cookie = "hasShownLicenseForopenh264=true";
+
+    convertFilePNGInternal(filename_convertFilePNG, name_convertFilePNG);
+}
+
+function convertFilePNGInternal(filename, name) {
     if (confirm("Converting a .rec file into .csv/.png files can take several minutes. Do you want to continue?")) {
         document.getElementById('download-csvpng-' + name).disabled = true;
         document.getElementById('download-csvpng-' + name).style.color = "#555";
@@ -336,6 +456,7 @@ function convertFilePNG(filename, name) {
         });
     }
 }
+{{/if}}
 
 function replayFile(filename, name) {
     fetch('/replayrecfile', { method: 'post',
