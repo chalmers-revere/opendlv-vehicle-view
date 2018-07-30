@@ -40,10 +40,17 @@ RUN echo http://dl-4.alpinelinux.org/alpine/edge/main > /etc/apk/repositories &&
 
 RUN apk update && \
     apk --no-cache add \
-        docker \
+        curl \
+        git \
         nodejs \
         npm \
         zip
+RUN mkdir -p /tmp/download && \
+    curl -L https://download.docker.com/linux/static/stable/armhf/docker-18.06.0-ce.tgz | tar -xz -C /tmp/download && \
+    mv /tmp/download/docker/docker /usr/bin/ && \
+    rm -rf /tmp/download && \
+    apk del curl && \
+    rm -rf /var/cache/apk/*
 
 COPY --from=builder /tmp/rec-metadataToJSON /usr/bin
 

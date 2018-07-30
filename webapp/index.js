@@ -191,7 +191,7 @@ app.post('/convertrec2csv', (req, res) => {
 });
 
 app.post('/convertrec2csvpng', (req, res) => {
-    var process_cluonrec2csv = execSync('rm -f ' + req.body.recordingFile + '.csv.zip && mkdir -p recordings/tmp && if [ -f external.odvd ]; then cp external.odvd recordings/tmp/messages.odvd; else cp opendlv-standard-message-set-v0.9.6.odvd recordings/tmp/messages.odvd; fi && docker run --rm --volumes-from=opendlv-vehicle-view -w /opt/vehicle-view/recordings/tmp t --rec=../' + req.body.recordingFile + ' --odvd=messages.odvd && cd recordings/tmp && zip -r9 ../../' + req.body.recordingFile + '.csv.zip *.csv opendlv.proxy.ImageReading* && cd .. && rm -fr tmp && cd ..');
+    var process_cluonrec2csv = execSync('docker build -t transcoder https://github.com/chalmers-revere/rec2csv-png.git && rm -f ' + req.body.recordingFile + '.csv.zip && mkdir -p recordings/tmp && if [ -f external.odvd ]; then cp external.odvd recordings/tmp/messages.odvd; else cp opendlv-standard-message-set-v0.9.6.odvd recordings/tmp/messages.odvd; fi && docker run --rm --volumes-from=opendlv-vehicle-view -w /opt/vehicle-view/recordings/tmp transcoder --rec=../' + req.body.recordingFile + ' --odvd=messages.odvd && cd recordings/tmp && zip -r9 ../../' + req.body.recordingFile + '.csv.zip *.csv opendlv.proxy.ImageReading* && cd .. && rm -fr tmp && cd ..');
 
 console.log(process_cluonrec2csv.toString());
 
