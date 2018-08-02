@@ -16,16 +16,13 @@ the OpenDLV software ecosystem.
 ## Dependencies
 No dependencies! The following dependencies are part of the source distribution:
 
-* [font-awesome.css 4.7.0](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css)
+* [font-awesome.css 5.1.0](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/font-awesome.min.css)
 * [maptalks.css](https://unpkg.com/maptalks/dist/maptalks.css)
 * [maptalks](https://unpkg.com/maptalks/dist/maptalks.min.js)
 * [three 88](https://cdnjs.cloudflare.com/ajax/libs/three.js/88/three.min.js)
 * [gauge 2.1.4](https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.4/all/gauge.min.js)
-* [smoothie 1.32.0](https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.32.0/smoothie.min.js)
-* [libcluon.js 0.0.102](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-* [Decoder.js](https://github.com/Dregu/visio/blob/master/Decoder.js)
-* [Player.js](https://github.com/Dregu/visio/blob/master/Player.js)
-* [YUVCanvas.js](https://github.com/Dregu/visio/blob/master/YUVCanvas.js)
+* [libcluon.js 0.0.107](https://github.com/chrberger/libcluon) - [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+* [mini-decoder.js](https://github.com/chrberger/mini-decoder.js)
 
 
 ## Usage
@@ -39,7 +36,7 @@ OpenDLV Standard Message Set that are exchanged in a running OpenDLV.io session
 (running at 111 in the example), simply run it as follows:
 
 ```
-docker run --rm --net=host -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.19 --cid=111
+docker run --rm --net=host --name=opendlv-vehicle-view -v ~/recordings:/opt/vehicle-view/recordings -v /var/run/docker.sock:/var/run/docker.sock -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.20 --cid=111
 ```
 
 Now, simply point your web-browser to the IP address and port 8081 where you
