@@ -37,7 +37,7 @@ OpenDLV Standard Message Set that are exchanged in a running OpenDLV.io session
 (running at 111 in the example), simply run it as follows:
 
 ```
-docker run --rm --net=host --name=opendlv-vehicle-view -v ~/recordings:/opt/vehicle-view/recordings -v /var/run/docker.sock:/var/run/docker.sock -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.20 --cid=111
+docker run --rm --net=host --name=opendlv-vehicle-view -v ~/recordings:/opt/vehicle-view/recordings -v /var/run/docker.sock:/var/run/docker.sock -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.20
 ```
 
 Now, simply point your web-browser to the IP address and port 8081 where you
