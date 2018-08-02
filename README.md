@@ -2,7 +2,8 @@
 
 This repository provides source code to view selected vehicle onboard data like
 GPS position and point clouds that are exchanged in a running session using
-the OpenDLV software ecosystem.
+the OpenDLV software ecosystem. The best performance is experienced using
+Chrome or Firefox.
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
