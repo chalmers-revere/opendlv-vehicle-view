@@ -182,6 +182,8 @@
 <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
 
 <script>
+    var g_vehicle = "Kiwi";
+
     function showParameters() {
         var parameters = document.getElementById("parameters");
         if (parameters.style.display === "none") {
@@ -192,17 +194,19 @@
     }
 
     function setParametersForSnowfox() {
+        g_vehicle = "Snowfox";
         document.getElementById("parametersSnowfox").style.color = "#3498DB";
         document.getElementById("parametersRhino").style.color = "#555";
         document.getElementById("parametersKiwi").style.color = "#555";
 
-        document.getElementById("minSteering").value = -6.5;
-        document.getElementById("maxSteering").value = 6.5;
+        document.getElementById("minSteering").value = -10;
+        document.getElementById("maxSteering").value = 10;
         document.getElementById("maxAcceleration").value = 3;
         document.getElementById("maxDeceleration").value = 10;
     }
 
     function setParametersForRhino() {
+        g_vehicle = "Rhino";
         document.getElementById("parametersSnowfox").style.color = "#555";
         document.getElementById("parametersRhino").style.color = "#3498DB";
         document.getElementById("parametersKiwi").style.color = "#555";
@@ -214,6 +218,7 @@
     }
 
     function setParametersForKiwi() {
+        g_vehicle = "Kiwi";
         document.getElementById("parametersSnowfox").style.color = "#555";
         document.getElementById("parametersRhino").style.color = "#555";
         document.getElementById("parametersKiwi").style.color = "#3498DB";
@@ -323,6 +328,9 @@
             var maxSteering = Number(document.getElementById("maxSteering").value);
             var minSteering = Number(document.getElementById("minSteering").value);
             var steering = Math.floor((axisX/100.0*(maxSteering-minSteering) + minSteering) * 4.0)/4.0;
+            if ("Snowfox" == g_vehicle) {
+                steering *= -1.0;
+            }
 
             var maxAcceleration = Number(document.getElementById("maxAcceleration").value);
             var maxDeceleration = Number(document.getElementById("maxDeceleration").value);
