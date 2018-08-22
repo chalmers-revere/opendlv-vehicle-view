@@ -111,9 +111,9 @@
         <tr>
             <td colspan=2>
             <center>
-                <button id="parametersSnowfox" type="button" class="fas fa-car" style="font-size:20px;color:#555;padding: 5px 5px;" onclick="setParametersForSnowfox()" title="Configure parameters for Snowfox.">&nbsp;Snowfox</button>
+                <button id="parametersSnowfox" type="button" class="fas fa-car" style="font-size:20px;color:#3498DB;padding: 5px 5px;" onclick="setParametersForSnowfox()" title="Configure parameters for Snowfox.">&nbsp;Snowfox</button>
                 <button id="parametersRhino" type="button" class="fas fa-truck" style="font-size:20px;color:#555;padding: 5px 5px;" onclick="setParametersForRhino()" title="Configure parameters for Rhino.">&nbsp;Rhino</button>
-                <button id="parametersKiwi" type="button" class="fas fa-kiwi-bird" style="font-size:20px;color:#3498DB;padding: 5px 5px;" onclick="setParametersForKiwi()" title="Configure parameters for Kiwi.">&nbsp;Kiwi</button>
+                <button id="parametersKiwi" type="button" class="fas fa-kiwi-bird" style="font-size:20px;color:#555;padding: 5px 5px;" onclick="setParametersForKiwi()" title="Configure parameters for Kiwi.">&nbsp;Kiwi</button>
             <center>
             </td>
         </tr>
@@ -182,7 +182,17 @@
 <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
 
 <script>
-    var g_vehicle = "Kiwi";
+    var g_vehicle = "{{g_vehicle}}";
+
+    if ("Snowfox" == g_vehicle) {
+        setParametersForSnowfox();
+    }
+    else if ("Rhino" == g_vehicle) {
+        setParametersForRhino();
+    }
+    else if ("Kiwi" == g_vehicle) {
+        setParametersForKiwi();
+    }
 
     function showParameters() {
         var parameters = document.getElementById("parameters");
@@ -201,7 +211,7 @@
 
         document.getElementById("minSteering").value = -10;
         document.getElementById("maxSteering").value = 10;
-        document.getElementById("maxAcceleration").value = 3;
+        document.getElementById("maxAcceleration").value = 50;
         document.getElementById("maxDeceleration").value = 10;
     }
 
@@ -374,7 +384,7 @@
 
         var decelerationLabel = document.getElementById('deceleration');
         decelerationLabel.innerHTML = brakePedalPosition;
-    }, 1/10 /* 10Hz */ * 1000);
+    }, 1/25 /* 25Hz */ * 1000);
 </script>
 </body>
 </html>

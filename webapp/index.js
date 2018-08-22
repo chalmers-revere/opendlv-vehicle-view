@@ -24,6 +24,7 @@ const { exec, execSync, spawn } = require('child_process');
 var PORT = process.env.PORT || 8081;
 var LIVE_OD4SESSION_CID = process.env.OD4SESSION_CID || 111;
 var PLAYBACK_OD4SESSION_CID = process.env.PLAYBACK_OD4SESSION_CID || 253;
+var OPENDLV_VEHICLE_VIEW_PLATFORM = process.env.OPENDLV_VEHICLE_VIEW_PLATFORM || "Snowfox";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Killing process groups (used to stop cluon-OD4toStdout.
@@ -87,6 +88,17 @@ app.get("/playback", function(req, res) {
 const addThousandsSeparator = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+app.get("/virtualjoystick.html", function(req, res) {
+    const PLATFORM_IS_SNOWFOX = "Snowfox" == OPENDLV_VEHICLE_VIEW_PLATFORM;
+    const PLATFORM_IS_RHINO = "Rhino" == OPENDLV_VEHICLE_VIEW_PLATFORM;
+    const PLATFORM_IS_KIWI = "Kiwi" == OPENDLV_VEHICLE_VIEW_PLATFORM;
+    var config = { g_vehicle: OPENDLV_VEHICLE_VIEW_PLATFORM,
+                   platformIsSnowfox: PLATFORM_IS_SNOWFOX,
+                   platformIsRhino: PLATFORM_IS_RHINO,
+                   platformIsKiwi: PLATFORM_IS_KIWI };
+    res.render('virtualjoystick', config);
+});
+
 app.get("/recordings", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
     var platform = process.arch.toString();
