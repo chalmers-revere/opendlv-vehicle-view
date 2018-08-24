@@ -5,7 +5,8 @@ GPS position and point clouds that are exchanged in a running session using
 the OpenDLV software ecosystem. The best performance is experienced using
 Chrome or Firefox.
 
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![License: GPLv3](https://img.shields.io/badge/license-GPL--3-blue.svg
+)](https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 ## Table of Contents
@@ -48,5 +49,5 @@ started this microservice to see any currently exchanged messages:
 
 ## License
 
-* This project is released under the terms of the BSD-3-Clause License
+* This project is released under the terms of the GNU GPLv3 License
 
