@@ -173,6 +173,7 @@
                     <center>
                     <button id="record" type="button" class="fa fa-circle" style="font-size:20px;color:#555;padding: 5px 30px;" title="Start recording this live session."></button>
                     <button id="recordings" type="button" class="far fa-folder-open" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='recordings'" title="View and handle existing recording files."></button>
+                    <button id="enableSendingJoyStick" type="button" class="fas fa-gamepad" style="font-size:20px;color:#555;padding: 5px 30px;" title="Start Joystick." onclick="location.href='joystick'"></button>
                     </center>
                 </div>
             </div>
@@ -228,15 +229,6 @@
                             <div class="col-md-2">
 {{#if livePage}}
                                 <table>
-                                <tr>
-                                <td>
-                                Joystick:
-                                </td>
-                                <td>
-                                <button id="enableSendingJoyStick" type="button" class="fas fa-toggle-off" style="font-size:20px;color:#555;padding: 5px 30px;" title="Send joystick commands to Kiwi." onclick="enableSendingJoystickToggled()"></button>
-                                </td>
-                                </tr>
-
 {{#if platformIsKiwi}}
                                 <tr>
                                 <td>
@@ -352,6 +344,10 @@ actuation.steering = 0.3;
         editor.session.setMode("ace/mode/javascript");
     </script>
 -->
+
+<script>
+var g_vehicle = "{{g_vehicle}}";
+</script>
 
 {{#if livePage}}
 <script>
