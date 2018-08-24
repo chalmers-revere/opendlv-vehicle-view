@@ -75,13 +75,13 @@ app.set('view engine', '.hbs');
 // Default landing page.
 app.get("/", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
-    res.render('kiwi', { livePage: true,
+    res.render('main', { livePage: true,
                          useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile });
 });
 
 app.get("/playback", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
-    res.render('kiwi', { playbackPage: true,
+    res.render('main', { playbackPage: true,
                          useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile });
 });
 
