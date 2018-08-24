@@ -21,7 +21,6 @@ var g_infiniteButton = false;
 var g_userIsSteppingForward = false;
 var g_envelopeCounter = 0;
 var g_mapOfMessages = {};
-var g_sendFromJoystick = false;
 var g_sendFromCode = false;
 var g_perception = {
     front : 0,
@@ -172,7 +171,7 @@ function processEnvelope(incomingData) {
             }
         }
 
-        if ( 0 == (g_envelopeCounter % 10)) {
+        if (0 == (g_envelopeCounter % 10)) {
             $tableMessagesOverview.empty(); // empty is more explicit
 
             for (var k in g_mapOfMessages) {
@@ -434,80 +433,6 @@ function setupUI() {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Joystick.
-    var joystick = new VirtualJoystick({
-        container: document.getElementById('center-view'),
-        mouseSupport: true,
-        strokeStyle: '#3498DB',
-        limitStickTravel: true,
-    });
-
-    function updateFromJoystick() {
-        var envPedalPositionRequest;
-        var envGroundSteeringRequest;
-        var envActuationRequest;
-
-        // Values for Kiwi.
-        var minSteering = 0; // Number(document.getElementById("minSteering").value)
-        var maxSteering = 38; // Number(document.getElementById("maxSteering").value)
-        var maxAcceleration = 25; // Number(document.getElementById("maxAcceleration").value)
-        var maxDeceleration = 100; // Number(document.getElementById("maxDeceleration").value)
-
-        var steering = 0;
-        var gasPedalPosition = 0;
-        var brakePedalPosition = 0;
-
-        // Support for PedalPositionRequest & GroundSteeringRequest.
-        {
-            var pedalPosition = Math.floor(((-1 * joystick.deltaY())/100.0)*100.0)/100.0;
-
-            gasPedalPosition = Math.floor(((pedalPosition > 0) ? (pedalPosition*maxAcceleration) : 0))/100.0;
-            brakePedalPosition = Math.floor(((pedalPosition < 0) ? (pedalPosition*maxDeceleration) : 0))/100.0;
-
-            var pedalPositionRequest = "{\"position\":" + (gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition) + "}";
-            envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
-
-
-            steering = Math.floor((-1 * (joystick.deltaX()/100.0) * maxSteering * Math.PI / 180.0)*100.0)/100.0;
-            var groundSteeringRequest = "{\"groundSteering\":" + steering + "}";
-            envGroundSteeringRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
-        }
-
-        // Disable support for legacy ActuationRequest.
-        {
-            var actuationRequest = "{\"acceleration\":0,\"steering\":0,\"isValid\":false}";
-            envActuationRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(actuationRequest, 160 /* message identifier */, 0 /* sender stamp */);
-
-//            strToAB = str =>
-//              new Uint8Array(str.split('')
-//                .map(c => c.charCodeAt(0))).buffer;
-
-// Instead of sending the raw bytes, we encapsulate them into a JSON object.
-//            ws.send(strToAB(output), { binary: true });
-        }
-
-        var actuationCommands = "{\"virtualjoystick\":" +
-                                    "{" +
-                                        "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
-                                        "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"," +
-                                        "\"actuationRequest\":" + "\"" + window.btoa(envActuationRequest) + "\"" +
-                                    "}" +
-                                "}";
-
-        if (g_sendFromJoystick) {
-            if (null != g_dc) {
-                g_dc.send(actuationCommands);
-            }
-            else {
-                g_ws.send(actuationCommands);
-            }
-
-            $("#steering").html(steering);
-            $("#motor").html((gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition));
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
     function updateFromCode() {
         if ("Kiwi" == g_vehicle) {
             const perception = g_perception;
@@ -562,12 +487,12 @@ function setupUI() {
                 var actuationRequest = "{\"acceleration\":0,\"steering\":0,\"isValid\":false}";
                 envActuationRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(actuationRequest, 160 /* message identifier */, 0 /* sender stamp */);
 
-    //            strToAB = str =>
-    //              new Uint8Array(str.split('')
-    //                .map(c => c.charCodeAt(0))).buffer;
+//                strToAB = str =>
+//                  new Uint8Array(str.split('')
+//                    .map(c => c.charCodeAt(0))).buffer;
 
-    // Instead of sending the raw bytes, we encapsulate them into a JSON object.
-    //            ws.send(strToAB(output), { binary: true });
+//                // Instead of sending the raw bytes, we encapsulate them into a JSON object.
+                ws.send(strToAB(output), { binary: true });
             }
 
             var actuationCommands = "{\"virtualjoystick\":" +
@@ -607,7 +532,6 @@ function setupUI() {
 
     ////////////////////////////////////////////////////////////////////////////
     setInterval(function() {
-        updateFromJoystick();
         updateFromCode();
     }, 1/10 /* 10Hz */ * 1000);
 
@@ -645,15 +569,6 @@ function setupUI() {
 ////////////////////////////////////////////////////////////////////////////////
 
 function updateSendingButtons() {
-    if (g_sendFromJoystick) {
-        $("#enableSendingJoyStick").removeClass("fas fa-toggle-off").addClass("fas fa-toggle-on");
-        $("#enableSendingJoyStick").css("color", "#3CB371");
-    }
-    else {
-        $("#enableSendingJoyStick").removeClass("fas fa-toggle-on").addClass("fas fa-toggle-off");
-        $("#enableSendingJoyStick").css("color", "#555");
-    }
-
     if ("Kiwi" == g_vehicle) {
         if (g_sendFromCode) {
             $("#enableSendingCode").removeClass("fas fa-toggle-off").addClass("fas fa-toggle-on");
@@ -663,48 +578,33 @@ function updateSendingButtons() {
             $("#enableSendingCode").removeClass("fas fa-toggle-on").addClass("fas fa-toggle-off");
             $("#enableSendingCode").css("color", "#555");
         }
-    }
 
-    // Stop Kiwi.
-    if (!g_sendFromJoystick && !g_sendFromCode) {
-        var groundSteeringRequest = "{\"groundSteering\":0}";
-        var envGroundSteeringRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
+        // Stop Kiwi.
+        if (!g_sendFromCode) {
+            var groundSteeringRequest = "{\"groundSteering\":0}";
+            var envGroundSteeringRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
 
-        var pedalPositionRequest = "{\"position\":0}";
-        var envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
+            var pedalPositionRequest = "{\"position\":0}";
+            var envPedalPositionRequest = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
 
-        var actuationCommands = "{\"virtualjoystick\":" +
-                                    "{" +
-                                        "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
-                                        "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"" +
-                                    "}" +
-                                "}";
-        if (null != g_dc) {
-            g_dc.send(actuationCommands);
+            var actuationCommands = "{\"virtualjoystick\":" +
+                                        "{" +
+                                            "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
+                                            "\"groundSteeringRequest\":" + "\"" + window.btoa(envGroundSteeringRequest) + "\"" +
+                                        "}" +
+                                    "}";
+            if (null != g_dc) {
+                g_dc.send(actuationCommands);
+            }
+            else {
+                g_ws.send(actuationCommands);
+            }
         }
-        else {
-            g_ws.send(actuationCommands);
-        }
     }
-}
-
-function enableSendingJoystickToggled() {
-    g_sendFromJoystick = !g_sendFromJoystick;
-
-    if (g_sendFromJoystick) {
-        g_sendFromCode = false;
-    }
-
-    updateSendingButtons();
 }
 
 function enableSendingCodeToggled() {
     g_sendFromCode = !g_sendFromCode;
-
-    if (g_sendFromCode) {
-        g_sendFromJoystick = false;
-    }
-
     updateSendingButtons();
 }
 
@@ -793,12 +693,12 @@ function remotePlayer(value) {
 
     var output = g_libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
 
-//        strToAB = str =>
-//          new Uint8Array(str.split('')
-//            .map(c => c.charCodeAt(0))).buffer;
+//    strToAB = str =>
+//      new Uint8Array(str.split('')
+//        .map(c => c.charCodeAt(0))).buffer;
 
-// Instead of sending the raw bytes, we encapsulate them into a JSON object.
-//        g_ws.send(strToAB(output), { binary: true });
+//    // Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//    g_ws.send(strToAB(output), { binary: true });
 
     var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
     g_ws.send(commandJSON);
