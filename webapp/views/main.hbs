@@ -221,6 +221,13 @@
 {{#if platformIsKiwi}}
                                 <canvas id="sensorView" width="400" height="400"></canvas>
 {{/if}}
+{{#if platformIsSnowfox}}
+                                <div id="ego-3dview"></div>
+{{/if}}
+{{#if platformIsRhino}}
+                                <div id="ego-3dview"></div>
+{{/if}}
+
                             </div>
                             <div class="col-md-2">
 {{#if livePage}}
@@ -374,9 +381,11 @@ actuation.steering = 0.3;
 </div>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/maptalks.min.js"></script>
     <script type="text/javascript" src="js/tether.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/three.min.js"></script>
+    <script type="text/javascript" src="js/OrbitControls.js"></script>
+    <script type="text/javascript" src="js/maptalks.min.js"></script>
     <script type="text/javascript" src="js/Chart.js"></script>
     <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
     <script type="text/javascript" src="js/mini-decoder.js"></script>

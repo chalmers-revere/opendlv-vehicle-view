@@ -22,7 +22,27 @@ var g_userIsSteppingForward = false;
 var g_envelopeCounter = 0;
 var g_mapOfMessages = {};
 var g_sendFromCode = false;
+
 var g_map;
+
+const MAX_POINTS_vlp16 = 63000;
+const MAX_POINTS_hdl32e_12 = 63000;
+const MAX_POINTS_hdl32e_11 = 63000;
+const MAX_POINTS_hdl32e_9 = 63000;
+var g_particles_pointcloud_vlp16;
+var g_particles_pointcloud_hdl32e_12;
+var g_particles_pointcloud_hdl32e_11;
+var g_particles_pointcloud_hdl32e_9;
+var GL_position_index_vlp16 = 0;
+var GL_position_index_hdl32e_12 = 0;
+var GL_position_index_hdl32e_11 = 0;
+var GL_position_index_hdl32e_9 = 0;
+// Setup look-up table for interleaved vertical layers.
+const verticalAngles16 = [-15.0, -13.0, -11.0, -9.0, -7.0, -5.0, -3.0, -1.0, 1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0];
+const verticalAngles12 = [-30.67, -29.33, -25.33, -21.32, -17.32, -13.31, -9.31, -5.3, -1.3, 2.71, 6.71, 10.72];
+const verticalAngles11 = [-28.0, -26.66, -22.66, -18.65, -14.65, -10.64, -6.64, -2.63, 1.37, 5.38, 9.38];
+const verticalAngles9 = [-23.99, -19.99, -15.98, -11.98, -7.97, -3.97, 0.04, 4.04, 8.05];
+
 var g_perception = {
     front : 0,
     rear : 0,
@@ -290,6 +310,209 @@ function processEnvelope(incomingData) {
         return;
     }
 
+    // opendlv_proxy_PointCloudReading
+    if (49 == data.dataType) {
+        document.getElementById('ego-3dview').style.visibility = "visible";
+        // CompactPointCloud
+        var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
+
+        var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
+        var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
+        var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
+        var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
+        var numberOfPoints = distances.length / 2;
+        var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
+        var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
+
+        var GL_positions_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.position.array;
+        var GL_colors_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.color.array;
+
+        var GL_positions_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+        var GL_colors_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+
+        var GL_positions_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
+        var GL_colors_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+
+        var GL_positions_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
+        var GL_colors_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
+
+        // VLP16 sends 16 layers,
+        if (16 == entriesPerAzimuth) {
+            GL_positions_vlp16.fill(0);
+            GL_colors_vlp16.fill(0);
+            GL_position_index_vlp16 = 0;
+        }
+        else if (12 == entriesPerAzimuth) {
+            // HDL32e sends the sequence 12, 11, 9 layers.
+            GL_positions_hdl32e_12.fill(0);
+            GL_colors_hdl32e_12.fill(0);
+            GL_position_index_hdl32e_12 = 0;
+        }
+        else if (11 == entriesPerAzimuth) {
+            GL_positions_hdl32e_11.fill(0);
+            GL_colors_hdl32e_11.fill(0);
+            GL_position_index_hdl32e_11 = 0;
+        }
+        else if (9 == entriesPerAzimuth) {
+            GL_positions_hdl32e_9.fill(0);
+            GL_colors_hdl32e_9.fill(0);
+            GL_position_index_hdl32e_9 = 0;
+        }
+
+        var index = 0;
+        var azimuth = startAzimuth;
+        for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
+            for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
+                var verticalAngle = 0;
+                if (16 == entriesPerAzimuth) {
+                    verticalAngle = verticalAngles16[sensorIndex];
+                }
+                else if (12 == entriesPerAzimuth) {
+                    verticalAngle = verticalAngles12[sensorIndex];
+                }
+                else if (11 == entriesPerAzimuth) {
+                    verticalAngle = verticalAngles11[sensorIndex];
+                }
+                else if (9 == entriesPerAzimuth) {
+                    verticalAngle = verticalAngles9[sensorIndex];
+                }
+
+                var byte0 = distances.charCodeAt(index++);
+                var byte1 = distances.charCodeAt(index++);
+                var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
+
+                var r = 0;
+                var g = 0;
+                var b = 1.0;
+
+                // Extract intensity.
+                if (0 < numberOfBitsForIntensity) {
+                    var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
+                    var extractedIntensity = distance & MASK;
+                    extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
+                    var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
+                    var intensity = extractedIntensity / intensityMaxValue;
+
+                    if ( (intensity > 1.0) || (0 > intensity) ) {
+                        intensity = 0.5;
+                    }
+
+                    // Four color levels: blue, green, yellow, red from low intensity to high intensity
+                    if (intensity < 0.25 + 1e-7) {
+                        r = 0;
+                        g = 0.5 + intensity * 2.0;
+                        b = 1;
+                    } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
+                        r = 0;
+                        g = 0.5 + intensity * 2.0;
+                        b = 0.5;
+                    } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
+                        r = 1;
+                        g = 0.75 + intensity;
+                        b = 0;
+                    } else {
+                        r = 0.55 + intensity;
+                        g = 0;
+                        b = 0;
+                    }
+
+                    // Remove intensity from distance.
+                    distance &= (0xFFFF >> numberOfBitsForIntensity);
+                }
+
+                distance /= 100.0;
+
+                if (distance > 1.0) {
+                    var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
+                    var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
+                    var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
+                    var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
+
+                    if (16 == entriesPerAzimuth) {
+                        if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
+                            GL_positions_vlp16[GL_position_index_vlp16] = x;
+                            GL_colors_vlp16[GL_position_index_vlp16] = r;
+                            GL_position_index_vlp16++;
+
+                            GL_positions_vlp16[GL_position_index_vlp16] = z;
+                            GL_colors_vlp16[GL_position_index_vlp16] = g;
+                            GL_position_index_vlp16++;
+
+                            GL_positions_vlp16[GL_position_index_vlp16] = -y;
+                            GL_colors_vlp16[GL_position_index_vlp16] = b;
+                            GL_position_index_vlp16++;
+                        }
+
+                    }
+                    else if (12 == entriesPerAzimuth) {
+                        if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
+                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                            GL_position_index_hdl32e_12++;
+
+                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                            GL_position_index_hdl32e_12++;
+
+                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                            GL_position_index_hdl32e_12++;
+                        }
+                    }
+                    else if (11 == entriesPerAzimuth) {
+                        if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
+                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
+                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
+                            GL_position_index_hdl32e_11++;
+
+                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
+                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
+                            GL_position_index_hdl32e_11++;
+
+                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
+                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
+                            GL_position_index_hdl32e_11++;
+                        }
+                    }
+                    else if (9 == entriesPerAzimuth) {
+                        if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
+                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
+                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
+                            GL_position_index_hdl32e_9++;
+
+                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
+                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
+                            GL_position_index_hdl32e_9++;
+
+                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
+                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
+                            GL_position_index_hdl32e_9++;
+                        }
+                    }
+                }
+            }
+            azimuth += azimuthIncrement;
+        }
+
+        // Trigger update
+        if (16 == entriesPerAzimuth) {
+            g_particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
+            g_particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
+        }
+        else if (12 == entriesPerAzimuth) {
+            g_particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+            g_particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
+        }
+        else if (11 == entriesPerAzimuth) {
+            g_particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
+            g_particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
+        }
+        else if (9 == entriesPerAzimuth) {
+            g_particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
+            g_particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+        }
+    }
+
     if (data.dataType == 10 /*PlayerStatus*/) {
         if (IS_PLAYBACK_PAGE) {
             var total = data.cluon_data_PlayerStatus.numberOfEntries;
@@ -439,6 +662,9 @@ function setupUI() {
             }
         });
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    setupPointCloudView();
 
     ////////////////////////////////////////////////////////////////////////////
     g_map = new maptalks.Map("map",{
@@ -627,6 +853,130 @@ function setupUI() {
             });
         }
     });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+function setupPointCloudView() {
+    var scene = new THREE.Scene();
+
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(400, 286);
+    renderer.setClearColor(new THREE.Color(0xaaaaaa));
+    document.getElementById('ego-3dview').appendChild(renderer.domElement);
+    document.getElementById('ego-3dview').style.visibility = "hidden";
+
+    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+    camera.position.y = 5;
+    camera.position.z = 5;
+    camera.lookAt (new THREE.Vector3(0, 0, 0));
+    scene.add (camera);
+
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set (0, 20, 20);
+    scene.add (pointLight);
+    
+    var ambientLight = new THREE.AmbientLight (0xaaaaaa);
+    scene.add(ambientLight);
+
+
+    var gridXZ = new THREE.GridHelper(50, 50, 0xff0000, 0xffffff);
+    scene.add(gridXZ);
+
+    // Point Cloud for VLP16:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_vlp16 = new THREE.BufferGeometry();
+
+        var positions_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // 3 vertices per point
+        positions_vlp16.fill(0);
+        geometry_pointcloud_vlp16.addAttribute('position', new THREE.BufferAttribute(positions_vlp16, 3));
+
+        var colors_vlp16 = new Float32Array(MAX_POINTS_vlp16 * 3); // RGB per point
+        colors_vlp16.fill(0);
+        geometry_pointcloud_vlp16.addAttribute('color', new THREE.BufferAttribute(colors_vlp16, 3));
+
+        g_particles_pointcloud_vlp16 = new THREE.Points(geometry_pointcloud_vlp16, pointMaterial);
+        scene.add(g_particles_pointcloud_vlp16);
+    }
+
+    // Point Cloud for HDL32e_12 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_12 = new THREE.BufferGeometry();
+        var positions_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // 3 vertices per point
+        positions_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_12, 3));
+
+        var colors_hdl32e_12 = new Float32Array(MAX_POINTS_hdl32e_12 * 3); // RGB per point
+        colors_hdl32e_12.fill(0);
+        geometry_pointcloud_hdl32e_12.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_12, 3));
+
+        g_particles_pointcloud_hdl32e_12 = new THREE.Points(geometry_pointcloud_hdl32e_12, pointMaterial);
+        scene.add(g_particles_pointcloud_hdl32e_12);
+    }
+
+    // Point Cloud for HDL32e_11 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_11 = new THREE.BufferGeometry();
+        var positions_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // 3 vertices per point
+        positions_hdl32e_11.fill(0);
+        geometry_pointcloud_hdl32e_11.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_11, 3));
+
+        var colors_hdl32e_11 = new Float32Array(MAX_POINTS_hdl32e_11 * 3); // RGB per point
+        colors_hdl32e_11.fill(0);
+        geometry_pointcloud_hdl32e_11.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_11, 3));
+
+        g_particles_pointcloud_hdl32e_11 = new THREE.Points(geometry_pointcloud_hdl32e_11, pointMaterial);
+        scene.add(g_particles_pointcloud_hdl32e_11);
+    }
+
+    // Point Cloud for HDL32e_9 layers:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_hdl32e_9 = new THREE.BufferGeometry();
+        var positions_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // 3 vertices per point
+        positions_hdl32e_9.fill(0);
+        geometry_pointcloud_hdl32e_9.addAttribute('position', new THREE.BufferAttribute(positions_hdl32e_9, 3));
+
+        var colors_hdl32e_9 = new Float32Array(MAX_POINTS_hdl32e_9 * 3); // RGB per point
+        colors_hdl32e_9.fill(0);
+        geometry_pointcloud_hdl32e_9.addAttribute('color', new THREE.BufferAttribute(colors_hdl32e_9, 3));
+
+        g_particles_pointcloud_hdl32e_9 = new THREE.Points(geometry_pointcloud_hdl32e_9, pointMaterial);
+        scene.add(g_particles_pointcloud_hdl32e_9);
+    }
+
+    var animate = function () {
+        requestAnimationFrame( animate );
+        renderer.render(scene, camera);
+    };
+
+    animate();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
