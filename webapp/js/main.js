@@ -388,49 +388,50 @@ function setupUI() {
         });
     }
 
-
-    sensorView = new Chart(document.getElementById("sensorView"), {
-        type: 'radar',
-        data: {
-            labels: ['0', '30', '60', '90', '120', '150', '180', '210', '240', '270', '300', '330'],
-            datasets: [
-                {
-                    label: "US front",
-                    borderColor: "#3498DB",
-                    data: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                }, 
-                {
-                    label: "US rear",
-                    borderColor: "#00BFFF",
-                    data: [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-                }, 
-                {
-                    label: "IR left",
-                    borderColor: "#FF8000",
-                    data: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
-                }, 
-                {
-                    label: "IR right",
-                    borderColor: "#FF0000",
-                    data: [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-                }, 
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scale: {
-                ticks: {
-                    beginAtZero: true,
-                    max: 4
-                }
+    if ("Kiwi" == g_vehicle) {
+        sensorView = new Chart(document.getElementById("sensorView"), {
+            type: 'radar',
+            data: {
+                labels: ['0', '30', '60', '90', '120', '150', '180', '210', '240', '270', '300', '330'],
+                datasets: [
+                    {
+                        label: "US front",
+                        borderColor: "#3498DB",
+                        data: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                    }, 
+                    {
+                        label: "US rear",
+                        borderColor: "#00BFFF",
+                        data: [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+                    }, 
+                    {
+                        label: "IR left",
+                        borderColor: "#FF8000",
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
+                    }, 
+                    {
+                        label: "IR right",
+                        borderColor: "#FF0000",
+                        data: [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                    }, 
+                ]
             },
-            title: {
-                display: true,
-                text: 'Sensor Bird\'s Eye View'
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scale: {
+                    ticks: {
+                        beginAtZero: true,
+                        max: 4
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Sensor Bird\'s Eye View'
+                }
             }
-        }
-    });
+        });
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Joystick.
@@ -651,13 +652,15 @@ function updateSendingButtons() {
         $("#enableSendingJoyStick").css("color", "#555");
     }
 
-    if (g_sendFromCode) {
-        $("#enableSendingCode").removeClass("fas fa-toggle-off").addClass("fas fa-toggle-on");
-        $("#enableSendingCode").css("color", "#3CB371");
-    }
-    else {
-        $("#enableSendingCode").removeClass("fas fa-toggle-on").addClass("fas fa-toggle-off");
-        $("#enableSendingCode").css("color", "#555");
+    if ("Kiwi" == g_vehicle) {
+        if (g_sendFromCode) {
+            $("#enableSendingCode").removeClass("fas fa-toggle-off").addClass("fas fa-toggle-on");
+            $("#enableSendingCode").css("color", "#3CB371");
+        }
+        else {
+            $("#enableSendingCode").removeClass("fas fa-toggle-on").addClass("fas fa-toggle-off");
+            $("#enableSendingCode").css("color", "#555");
+        }
     }
 
     // Stop Kiwi.

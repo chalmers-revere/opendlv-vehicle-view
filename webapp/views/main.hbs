@@ -221,7 +221,9 @@
                                 <canvas id="videoFrame"></canvas>
                             </div>
                             <div class="col-md-4">
+{{#if platformIsKiwi}}
                                 <canvas id="sensorView" width="400" height="400"></canvas>
+{{/if}}
                             </div>
                             <div class="col-md-2">
 {{#if livePage}}
@@ -234,6 +236,8 @@
                                 <button id="enableSendingJoyStick" type="button" class="fas fa-toggle-off" style="font-size:20px;color:#555;padding: 5px 30px;" title="Send joystick commands to Kiwi." onclick="enableSendingJoystickToggled()"></button>
                                 </td>
                                 </tr>
+
+{{#if platformIsKiwi}}
                                 <tr>
                                 <td>
                                 Code:
@@ -242,9 +246,12 @@
                                 <button id="enableSendingCode" type="button" class="fas fa-toggle-off" style="font-size:20px;color:#555;padding: 5px 30px;" title="Send code results to Kiwi." onclick="enableSendingCodeToggled()"></button>
                                 </td>
                                 </tr>
+{{/if}}
+
                                 </table>
 {{/if}}
 
+{{#if platformIsKiwi}}
                                 <table>
                                 <tr>
                                 <td>
@@ -263,7 +270,7 @@
                                 </td>
                                 </tr>
                                 </table>
-
+{{/if}}
 
                                 <div class="table-responsive">
                                     <div id="containerTimeStamp">-</div>
@@ -276,6 +283,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="tab-pane" id="panel-signals">
                         <div class="row">
                             <div class="col-md-12">
@@ -288,6 +296,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -307,6 +316,7 @@
             <br>
             <br>
             <br>
+{{#if platformIsKiwi}}
             <div id="editor">// Access sensor values.
 const frontSensor = perception.front;
 const rearSensor = perception.rear;
@@ -319,6 +329,7 @@ const rightSensor = perception.right;
 actuation.motor = 0;
 actuation.steering = 0.3;
 </div>
+{{/if}}
         </div>
     </div>
 </div>
@@ -333,13 +344,14 @@ actuation.steering = 0.3;
     <script type="text/javascript" src="js/mini-decoder.js"></script>
     <script type="text/javascript" src="js/virtualjoystick.js"></script>
 
+<!--
     <script type="text/javascript" src="js/src-min-noconflict/ace.js" charset="utf-8"></script>
     <script>
         var editor = ace.edit("editor");
         editor.setTheme("ace/theme/eclipse");
         editor.session.setMode("ace/mode/javascript");
     </script>
-
+-->
 
 {{#if livePage}}
 <script>
