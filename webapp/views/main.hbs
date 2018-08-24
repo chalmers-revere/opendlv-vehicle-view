@@ -24,9 +24,10 @@
 
     <title>OpenDLV Vehicle View</title>
 
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/style.css"/>
     <link type="text/css" rel="stylesheet" href="css/all.css"/>
+    <link type="text/css" rel="stylesheet" href="css/maptalks.css"/>
 
     <style>
     .bg {
@@ -49,6 +50,8 @@
         bottom: 0;
         left: 0;
     }
+
+    #map { width: 640px; height: 480px; }
 
 {{#if playbackPage}}
     input[type=range] {
@@ -202,6 +205,9 @@
                         <a class="nav-link active show" href="#panel-feed" data-toggle="tab">Overview</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#panel-map" data-toggle="tab">Map</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#panel-signals" data-toggle="tab">Messages</a>
                     </li>
                 </ul>
@@ -263,6 +269,35 @@
                                     </table>
                                 </div>
 
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="panel-map">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <center>
+                                <div id="map"></div>
+                                </center>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
                             </div>
                         </div>
                     </div>
@@ -339,6 +374,7 @@ actuation.steering = 0.3;
 </div>
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/maptalks.min.js"></script>
     <script type="text/javascript" src="js/tether.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/Chart.js"></script>
