@@ -56,7 +56,7 @@ function isArrayBuffer(obj) {
 
 function dcInit(dc) {
     dc.onopen = function() {
-        $("#connectionStatusText").html("connected (WebRTC)");
+        $("#connectionStatusText").html("OpenDLV Vehicle View (connected/WebRTC)");
     };
 
     dc.onmessage = function(e) {if (e.data) {
@@ -319,7 +319,7 @@ function setupUI() {
             }
             $("#connectionStatusSymbol").css("color", "#3CB371");
             $("#connectionStatusText").css("color", "#3CB371");
-            $("#connectionStatusText").html("connected");
+            $("#connectionStatusText").html("OpenDLV Vehicle View (connected)");
 
             var odvd = getResourceFrom(ODVD_FILE);
             console.log("Loaded " + g_libcluon.setMessageSpecification(odvd) + " messages from specification '" + ODVD_FILE + "'.");
@@ -335,7 +335,7 @@ function setupUI() {
         g_ws.onclose = function() {
             $("#connectionStatusSymbol").css("color", "#555");
             $("#connectionStatusText").css("color", "#555");
-            $("#connectionStatusText").html("disconnected");
+            $("#connectionStatusText").html("OpenDLV Vehicle View (disconnected)");
         };
 
         g_ws.onmessage = function(evt) {
