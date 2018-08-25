@@ -82,9 +82,6 @@ RUN mkdir -p /tmp/download && \
 # Install rec-metadataToJSON from builder image.
 COPY --from=builder /tmp/rec-metadataToJSON /usr/bin
 
-# Use /bin/bash from now on.
-SHELL ["/bin/bash", "-c"]
-
 # Setup application folder.
 RUN mkdir -p /opt/vehicle-view/recordings
 WORKDIR /opt/vehicle-view
