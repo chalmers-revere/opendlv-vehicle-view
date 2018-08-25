@@ -24,6 +24,8 @@ var g_mapOfMessages = {};
 var g_sendFromCode = false;
 
 var g_map;
+var g_gnuplot;
+var g_mapOfDataForGnuplot = {};
 
 const MAX_POINTS_vlp16 = 63000;
 const MAX_POINTS_hdl32e_12 = 63000;
@@ -167,17 +169,27 @@ function processEnvelope(incomingData) {
             $('<th>').text("signal(s)").appendTo($row);
 
             for (var k in g_mapOfMessages) {
+                var messageName = Object.keys(g_mapOfMessages[k].envelope)[5];
+                var senderStamp = g_mapOfMessages[k].envelope.senderStamp;
+
                 var $row = $('<tr>').appendTo($tableMessagesDetails);
                 $('<td>').text(g_mapOfMessages[k].envelope.dataType).appendTo($row);
-                $('<td>').text(g_mapOfMessages[k].envelope.senderStamp).appendTo($row);
-                $('<td>').text(Object.keys(g_mapOfMessages[k].envelope)[5]).appendTo($row);
+                $('<td>').text(senderStamp).appendTo($row);
+                $('<td>').text(messageName).appendTo($row);
                 $('<td>').text(g_mapOfMessages[k].sampleTimeStamp).appendTo($row);
                 var msg = g_mapOfMessages[k].envelope[Object.keys(g_mapOfMessages[k].envelope)[5]];
 
+                var key = messageName + "." + senderStamp;
+                if (!(key in g_mapOfDataForGnuplot)) {
+                    g_mapOfDataForGnuplot[key] = "";
+                }
+
                 var tmp = "";
+                var gnuplotDataEntry = "";
                 for (var j in msg) {
                     var v = msg[j];
                     tmp += j;
+
                     if ((typeof msg[j]) == 'string') {
                         if (v.length > 10) {
                             v = " (base64) " + v.substr(0, 10) + "...";
@@ -186,9 +198,21 @@ function processEnvelope(incomingData) {
                             v = window.atob(v);
                         }
                     }
+
+                    if ((typeof msg[j]) == 'number') {
+                        gnuplotDataEntry += v + " ";
+                    }
+
                     tmp += ": " + v + "<br>";
                 }
+                g_mapOfDataForGnuplot[key] += gnuplotDataEntry + '\n';
+
                 $('<td>').html(tmp).appendTo($row);
+            }
+
+            // Plot data.
+            if (!g_gnuplot.isRunning) {
+                gnuplot_runScript();
             }
         }
 
@@ -664,6 +688,9 @@ function setupUI() {
     }
 
     ////////////////////////////////////////////////////////////////////////////
+    setupGnuplot();
+
+    ////////////////////////////////////////////////////////////////////////////
     setupPointCloudView();
 
     ////////////////////////////////////////////////////////////////////////////
@@ -852,6 +879,71 @@ function setupUI() {
                 console.log(error);
             });
         }
+    });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+function setupGnuplot() {
+    g_gnuplot = new Gnuplot("js/gnuplot.js");
+
+    g_gnuplot.onOutput = function(text) {
+        document.getElementById('gnuplot-output').value += text + '\n';
+        document.getElementById('gnuplot-output').scrollTop = 99999;
+    };
+    g_gnuplot.onError = function(text) {
+        document.getElementById('gnuplot-output').value += 'ERR: ' + text + '\n';
+        document.getElementById('gnuplot-output').scrollTop = 99999;
+    };
+}
+
+var g_lastTAContent = "";
+function gnuplot_scriptChange() {
+    var val = document.getElementById("gnuplot-script").value;
+    if (g_lastTAContent == val)
+        return;
+    localStorage["gnuplot.script"] = val;
+    if (g_gnuplot.isRunning) {
+        setTimeout(gnuplot_scriptChange, 1000);
+    }
+    else {
+        g_lastTAContent = val;
+        gnuplot_runScript();
+    }
+}
+
+var gnuplot_runScript = function() {
+    var editor = document.getElementById('gnuplot-script');
+    var start = Date.now();
+
+    // Hand over message names to GNU plot.
+    for (var k in g_mapOfDataForGnuplot) {
+        g_gnuplot.putFile(k, g_mapOfDataForGnuplot[k]);
+    }
+
+    g_gnuplot.run(editor.value, function(e) {
+        g_gnuplot.onOutput('Execution took ' + (Date.now() - start) / 1000 + 's.');
+        g_gnuplot.getFile('out.svg', function(e) {
+            if (!e.content) {
+                g_gnuplot.onError("Output file out.svg not found!");
+                return;
+            }
+            var img = document.getElementById('gnuplot-img');
+            try {
+                var ab = new Uint8Array(e.content);
+                var blob = new Blob([ab], {"type": "image\/svg+xml"});
+                window.URL = window.URL || window.webkitURL;
+                img.src = window.URL.createObjectURL(blob);
+            } catch (err) { // in case blob / URL missing, fallback to data-uri
+                if (!window.blobalert) {
+                    alert('Warning - your browser does not support Blob-URLs, using data-uri with a lot more memory and time required. Err: ' + err);
+                    window.blobalert = true;
+                }
+                var rstr = '';
+                for (var i = 0; i < e.content.length; i++)
+                    rstr += String.fromCharCode(e.content[i]);
+                img.src = 'data:image\/svg+xml;base64,' + btoa(rstr);
+            }
+        });
     });
 }
 

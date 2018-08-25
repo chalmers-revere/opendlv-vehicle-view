@@ -210,6 +210,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#panel-signals" data-toggle="tab">Messages</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#panel-plot" data-toggle="tab">Plot</a>
+                    </li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane active show" id="panel-feed">
@@ -341,6 +344,38 @@
                         </div>
                     </div>
 
+
+                    <div class="tab-pane" id="panel-plot">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <textarea id="gnuplot-script" rows="15" cols="90" onkeyup="gnuplot_scriptChange()">
+# Example for plotting latitude/longitude data using gnuplot.
+set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
+# Output must always be named 'out.svg' to display.
+set output 'out.svg'
+
+# Add legend top/left.
+set key inside top left
+
+set title 'GPS Coordinates'
+set xlabel 'Longitude'
+set ylabel 'Latitude'
+
+# Plot fields 2 and 1 of message "opendlv_proxy_GeodeticWgs84Reading".
+plot  "opendlv_proxy_GeodeticWgs84Reading.0" using 2:1 title 'Path' with lines
+                                        </textarea> <br>
+                                        <textarea id="gnuplot-output" rows="5" cols="90"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <img src="" id="gnuplot-img" type="image/svg+xml" width=500 height=400 />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -389,6 +424,7 @@ actuation.steering = 0.3;
     <script type="text/javascript" src="js/Chart.js"></script>
     <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
     <script type="text/javascript" src="js/mini-decoder.js"></script>
+    <script type="text/javascript" src="js/gnuplot_api.js"></script>
 
 <!--
     <script type="text/javascript" src="js/src-min-noconflict/ace.js" charset="utf-8"></script>
