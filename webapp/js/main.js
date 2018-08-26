@@ -162,6 +162,7 @@ function processEnvelope(incomingData) {
             $tableMessagesDetails.empty(); // empty is more explicit
 
             var $row = $('<tr>').appendTo($tableMessagesDetails);
+            $('<th>').text("action(s)").appendTo($row);
             $('<th>').text("ID").appendTo($row);
             $('<th>').text("senderStamp").appendTo($row);
             $('<th>').text("message name").appendTo($row);
@@ -172,18 +173,21 @@ function processEnvelope(incomingData) {
                 var messageName = Object.keys(g_mapOfMessages[k].envelope)[5];
                 var senderStamp = g_mapOfMessages[k].envelope.senderStamp;
 
-                var $row = $('<tr>').appendTo($tableMessagesDetails);
-                $('<td>').text(g_mapOfMessages[k].envelope.dataType).appendTo($row);
-                $('<td>').text(senderStamp).appendTo($row);
-                $('<td>').text(messageName).appendTo($row);
-                $('<td>').text(g_mapOfMessages[k].sampleTimeStamp).appendTo($row);
-                var msg = g_mapOfMessages[k].envelope[Object.keys(g_mapOfMessages[k].envelope)[5]];
-
-                var key = messageName + "." + senderStamp;
+                const key = messageName + "." + senderStamp;
                 if (!(key in g_mapOfDataForGnuplot)) {
                     g_mapOfDataForGnuplot[key] = "";
                 }
 
+                var $row = $('<tr id="' + key + '">').appendTo($tableMessagesDetails);
+                // Add action(s).
+                $('<td>').html('<button id="btn-' + key + '" type="button" class="fas fa-chart-bar" style="font-size:20px;color:#555;padding: 5px 30px;" title="Plot numerical signals." onclick=\'plotSignals("'+ key + '")\'></button>').appendTo($row);
+
+                $('<td>').text(g_mapOfMessages[k].envelope.dataType).appendTo($row);
+                $('<td>').text(senderStamp).appendTo($row);
+                $('<td>').text(messageName).appendTo($row);
+                $('<td>').text(g_mapOfMessages[k].sampleTimeStamp).appendTo($row);
+
+                var msg = g_mapOfMessages[k].envelope[Object.keys(g_mapOfMessages[k].envelope)[5]];
                 var tmp = "";
                 var gnuplotDataEntry = "";
                 for (var j in msg) {
@@ -205,9 +209,10 @@ function processEnvelope(incomingData) {
 
                     tmp += ": " + v + "<br>";
                 }
-                g_mapOfDataForGnuplot[key] += gnuplotDataEntry + '\n';
-
                 $('<td>').html(tmp).appendTo($row);
+
+                // Add values for plotting.
+                g_mapOfDataForGnuplot[key] += gnuplotDataEntry + '\n';
             }
 
             // Plot data.
@@ -622,6 +627,7 @@ function setupUI() {
         console.log("Error: websockets not supported by your browser.");
     }
 
+    ////////////////////////////////////////////////////////////////////////////
     if (IS_PLAYBACK_PAGE) {
         var slider = document.getElementById("playbackrange");
         slider.addEventListener("change", function() {
@@ -630,12 +636,12 @@ function setupUI() {
 
             var output = g_libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remotePlayerJSON, 9 /* message identifier */, 0  /* sender stamp */);
 
-//                strToAB = str =>
-//                  new Uint8Array(str.split('')
-//                    .map(c => c.charCodeAt(0))).buffer;
+//            strToAB = str =>
+//              new Uint8Array(str.split('')
+//                .map(c => c.charCodeAt(0))).buffer;
 
-//     Instead of sending the raw bytes, we encapsulate them into a JSON object.
-//                ws.send(strToAB(output), { binary: true });
+//            // Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//            ws.send(strToAB(output), { binary: true });
 
             var commandJSON = "{\"remoteplayback\":" + "\"" + window.btoa(output) + "\"" + "}";
             g_ws.send(commandJSON);
@@ -883,6 +889,33 @@ function setupUI() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+function plotSignals(val) {
+    var plottingCode = "# Example for plotting " + val + " data using gnuplot.\n";
+    plottingCode += `set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
+set output 'out.svg'    # Output must always be named 'out.svg' to display.
+
+`;
+
+    plottingCode += "set title '" + val.replace(/_/g , "\\_") + "'\n";
+    plottingCode += `set xlabel 'Value 1'    # Define label for x axis.
+set ylabel 'Value 2'    # Define label for y axis.
+set key inside top left # Add legend box located at top/left.;
+
+`;
+    plottingCode += "# Plot first numerical signal of message '" + val + "'.\n";
+    plottingCode += "# Replace 'using 1' with 'using 1:2' or similar to access other fields.\n\n";
+    plottingCode += "# Actual call to plot data.\nplot \"" + val + "\" using 1 title 'Line 1' with lines\n";
+
+    document.getElementById("gnuplot-script").value = plottingCode;
+
+    if (!g_gnuplot.isRunning) {
+        gnuplot_runScript();
+    }
+
+    // Activate tab for plotting.
+    $('.nav-tabs a[href="#panel-plot"]').tab('show');
+}
+
 function setupGnuplot() {
     g_gnuplot = new Gnuplot("js/gnuplot.js");
 
@@ -899,9 +932,9 @@ function setupGnuplot() {
 var g_lastTAContent = "";
 function gnuplot_scriptChange() {
     var val = document.getElementById("gnuplot-script").value;
-    if (g_lastTAContent == val)
+    if (g_lastTAContent == val) {
         return;
-    localStorage["gnuplot.script"] = val;
+    }
     if (g_gnuplot.isRunning) {
         setTimeout(gnuplot_scriptChange, 1000);
     }
@@ -921,7 +954,7 @@ var gnuplot_runScript = function() {
     }
 
     g_gnuplot.run(editor.value, function(e) {
-        g_gnuplot.onOutput('Execution took ' + (Date.now() - start) / 1000 + 's.');
+        g_gnuplot.onOutput('Plotting took ' + (Date.now() - start) / 1000 + 's.');
         g_gnuplot.getFile('out.svg', function(e) {
             if (!e.content) {
                 g_gnuplot.onError("Output file out.svg not found!");
