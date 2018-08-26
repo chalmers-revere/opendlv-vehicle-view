@@ -30,11 +30,6 @@
     <link type="text/css" rel="stylesheet" href="css/maptalks.css"/>
 
     <style>
-    textarea {
-        font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
-        font-size:12px;
-    }
-
     .bg {
         background-image: url("background.jpg");
         height: 100%; 
@@ -354,11 +349,21 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">
+                                    <div class="col-md-12">
+                                        Select pre-defined plot:
+                                        <select id="gnuplot-preset" onchange="gnuplot_selectPreset()">
+                                            <option value="none">&nbsp;</option>
+                                            <option value="gps-trace">GPS trace</option>
+                                            <option value="kiwi-distances">Distances from Kiwi platform</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-md-6">
-                                        <textarea id="gnuplot-script" rows="20" cols="90" onkeyup="gnuplot_scriptChange()">
+                                        <textarea id="gnuplot-script" style="font-family:monospace;font-size:12px;" rows="20" cols="90" onkeyup="gnuplot_scriptChange()">
 # Click on the 'plot' button in the tab 'Messages' to add example code for plotting here.
                                         </textarea> <br>
-                                        <textarea id="gnuplot-output" rows="5" cols="90"></textarea>
+                                        <textarea id="gnuplot-output" style="font-family:monospace;font-size:12px;" rows="5" cols="90"></textarea>
                                     </div>
                                     <div class="col-md-6">
                                         <img src="" id="gnuplot-img" type="image/svg+xml" width=500 height=400 />

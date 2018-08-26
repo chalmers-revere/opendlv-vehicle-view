@@ -889,6 +889,45 @@ function setupUI() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+function gnuplot_selectPreset() {
+    const selection = document.getElementById('gnuplot-preset').value;
+    var plottingCode = "";
+    if ("gps-trace" == selection) {
+        plottingCode = `# Example for plotting opendlv_proxy_GeodeticWgs84Reading.0 as GPS trace using gnuplot.
+set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
+set output 'out.svg'    # Output must always be named 'out.svg' to display.
+
+set title 'opendlv\_proxy\_GeodeticWgs84Reading.0'
+set xlabel 'Longitude'
+set ylabel 'Latitude'
+set key inside top left # Add legend box located at top/left.
+
+plot "opendlv_proxy_GeodeticWgs84Reading.0" using 2:1 title 'GPS trace' with lines
+`;
+    }
+    else if ("kiwi-distances" == selection) {
+        plottingCode = `# Example for plotting opendlv_proxy_DistanceReading.0 from Kiwi using gnuplot.
+set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
+set output 'out.svg'    # Output must always be named 'out.svg' to display.
+
+set title 'opendlv\_proxy\_DistanceReading'
+set xlabel 't'
+set ylabel 'Distance [m]'
+set key inside top left # Add legend box located at top/left.
+
+plot "opendlv_proxy_DistanceReading.0" using 1 title 'US front' with lines, \
+     "opendlv_proxy_DistanceReading.2" using 1 title 'US rear' with lines
+`;
+    }
+
+    if ("" != plottingCode) {
+        document.getElementById("gnuplot-script").value = plottingCode;
+        if (!g_gnuplot.isRunning) {
+            gnuplot_runScript();
+        }
+    }
+}
+
 function plotSignals(val) {
     var plottingCode = "# Example for plotting " + val + " data using gnuplot.\n";
     plottingCode += `set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
@@ -899,7 +938,7 @@ set output 'out.svg'    # Output must always be named 'out.svg' to display.
     plottingCode += "set title '" + val.replace(/_/g , "\\_") + "'\n";
     plottingCode += `set xlabel 'Value 1'    # Define label for x axis.
 set ylabel 'Value 2'    # Define label for y axis.
-set key inside top left # Add legend box located at top/left.;
+set key inside top left # Add legend box located at top/left.
 
 `;
     plottingCode += "# Plot first numerical signal of message '" + val + "'.\n";
@@ -907,7 +946,6 @@ set key inside top left # Add legend box located at top/left.;
     plottingCode += "# Actual call to plot data.\nplot \"" + val + "\" using 1 title 'Line 1' with lines\n";
 
     document.getElementById("gnuplot-script").value = plottingCode;
-
     if (!g_gnuplot.isRunning) {
         gnuplot_runScript();
     }
