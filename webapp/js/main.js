@@ -755,6 +755,23 @@ function setupUI() {
     });
 
     ////////////////////////////////////////////////////////////////////////////
+    function clock() {
+        var date = new Date(new Date().getTime());
+        var year = date.getFullYear();
+        var month = "0" + (date.getMonth()+1);
+        var day = "0" + date.getDate();
+        var hours = date.getHours();
+        var minutes = "0" + date.getMinutes();
+        var seconds = "0" + date.getSeconds();
+
+        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+        $('#currentTime').text(formattedTime);
+        window.setTimeout(clock, 500);
+    }
+    window.setTimeout(clock, 500);
+
+    ////////////////////////////////////////////////////////////////////////////
     function updateFromCode() {
         if ("Kiwi" == g_vehicle) {
             const perception = g_perception;
@@ -898,8 +915,8 @@ set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
 set output 'out.svg'    # Output must always be named 'out.svg' to display.
 
 set title 'opendlv\_proxy\_GeodeticWgs84Reading.0'
-set xlabel 'Longitude'
-set ylabel 'Latitude'
+set xlabel 'Latitude'
+set ylabel 'Longitude'
 set key inside top left # Add legend box located at top/left.
 
 plot "opendlv_proxy_GeodeticWgs84Reading.0" using 2:1 title 'GPS trace' with lines
