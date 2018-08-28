@@ -293,15 +293,17 @@ function deleteExternallySuppliedODVDFile() {
 {{#each recfiles}}
     <tr>
         <td align="center">
-        <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
-        <button id="download-csv-{{name}}" type="button" class="fas fa-file-archive" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
+        <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
+        <button id="download-csv-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
 {{#if ../isX64}}
-        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:20px;color:#3498DB;padding: 5px 30px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
+        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
+        <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;.webm</button>
 {{else}}
-        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:20px;color:#555;padding: 5px 30px;disabled" title="Converting {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file not supported on non-x86_64 platforms.">&nbsp;<strike>.csv/.png</strike></button>
+        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#555;padding: 5px 20px;disabled" title="Converting {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file not supported on non-x86_64 platforms.">&nbsp;<strike>.csv/.png</strike></button>
+        <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;disabled" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;<strike>.webm</strike></button>
 {{/if}}
-        <button id="playFile" type="button" class="far fa-play-circle" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
-        <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
+        <button id="playFile" type="button" class="far fa-play-circle" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
+        <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
         </td>
         <td align="left">
         <div onclick="location.href = '../details?rec={{name}}'" onmouseover="" style="cursor: pointer;">{{name}}</div>
@@ -403,9 +405,15 @@ function convertFile(filename, name) {
 }
 
 {{#if isX64}}
+var needsToExtractPNG=false;
+var needsToExtractWEBM=false;
+
 var filename_convertFilePNG = "";
 var name_convertFilePNG = "";
 function convertFilePNG(filename, name) {
+    needsToExtractPNG = true;
+    needsToExtractWEBM = false;
+
     filename_convertFilePNG = filename;
     name_convertFilePNG = name;
 
@@ -421,7 +429,12 @@ function acceptopenh264License() {
     toggleMessageViewFromTop();
     document.cookie = "hasShownLicenseForopenh264=true";
 
-    convertFilePNGInternal(filename_convertFilePNG, name_convertFilePNG);
+    if (needsToExtractPNG) {
+        convertFilePNGInternal(filename_convertFilePNG, name_convertFilePNG);
+    }
+     if (needsToExtractWEBM) {
+       convertFileWEBMInternal(filename_convertFileWEBM, name_convertFileWEBM);
+    }
 }
 
 function convertFilePNGInternal(filename, name) {
@@ -449,6 +462,58 @@ function convertFilePNGInternal(filename, name) {
             document.body.style.cursor = 'default';
 
             alert("Failed to export .csv/.png files (maybe the message specification file was incomplete?).");
+            throw new Error('Request failed.');
+            })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+}
+{{/if}}
+
+{{#if isX64}}
+var filename_convertFileWEBM = "";
+var name_convertFileWEBM = "";
+function convertFileWEBM(filename, name) {
+    needsToExtractPNG = false;
+    needsToExtractWEBM = true;
+
+    filename_convertFileWEBM = filename;
+    name_convertFileWEBM = name;
+
+    if (document.cookie.replace(/(?:(?:^|.*;\s*)hasShownLicenseForopenh264\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
+        toggleMessageViewFromTop();
+    }
+    else {
+        convertFileWEBMInternal(filename_convertFileWEBM, name_convertFileWEBM);
+    }
+}
+
+function convertFileWEBMInternal(filename, name) {
+    if (confirm("Converting video frames from a .rec file into separate .webm files can take several tenth of minutes! Do you want to continue?")) {
+        document.getElementById('download-webm-' + name).disabled = true;
+        document.getElementById('download-webm-' + name).style.color = "#555";
+        document.body.style.cursor = 'wait';
+
+        fetch('/convertrec2webm', { method: 'post',
+                            headers: {
+                                'Accept': 'application/json, text/plain, */*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({recordingFileToConvert: filename, recordingFile: name })
+                           }
+        )
+        .then(function(response) {
+            if (response.ok) {
+                window.location = "../" + name + ".webm.zip";
+                document.getElementById('download-webm-' + name).disabled = false;
+                document.getElementById('download-webm-' + name).style.color = "#3498DB";
+                document.body.style.cursor = 'default';
+                return;
+            }
+            document.body.style.cursor = 'default';
+
+            alert("Failed to extract .webm files (maybe the message specification file was incomplete?).");
             throw new Error('Request failed.');
             })
         .catch(function(error) {
