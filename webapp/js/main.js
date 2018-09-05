@@ -135,14 +135,14 @@ function processEnvelope(incomingData) {
         var currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
 
         var date = new Date(currentTimeStamp/1000);
-        var year = date.getFullYear();
-        var month = "0" + (date.getMonth()+1);
-        var day = "0" + date.getDate();
-        var hours = date.getHours();
-        var minutes = "0" + date.getMinutes();
-        var seconds = "0" + date.getSeconds();
+        var year = date.getUTCFullYear();
+        var month = "0" + (date.getUTCMonth()+1);
+        var day = "0" + date.getUTCDate();
+        var hours = date.getUTCHours();
+        var minutes = "0" + date.getUTCMinutes();
+        var seconds = "0" + date.getUTCSeconds();
 
-        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " (UTC)";
         $("#containerTimeStamp").html(formattedTime);
         $("#containerTimeStampUnix").html(Math.floor(currentTimeStamp/1000) + " ms");
 
@@ -757,14 +757,14 @@ function setupUI() {
     ////////////////////////////////////////////////////////////////////////////
     function clock() {
         var date = new Date(new Date().getTime());
-        var year = date.getFullYear();
-        var month = "0" + (date.getMonth()+1);
-        var day = "0" + date.getDate();
-        var hours = date.getHours();
-        var minutes = "0" + date.getMinutes();
-        var seconds = "0" + date.getSeconds();
+        var year = date.getUTCFullYear();
+        var month = "0" + (date.getUTCMonth()+1);
+        var day = "0" + date.getUTCDate();
+        var hours = date.getUTCHours();
+        var minutes = "0" + date.getUTCMinutes();
+        var seconds = "0" + date.getUTCSeconds();
 
-        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+        var formattedTime = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " (UTC)";
 
         $('#currentTime').text(formattedTime);
         window.setTimeout(clock, 500);
