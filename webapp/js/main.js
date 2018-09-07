@@ -39,11 +39,16 @@ var GL_position_index_vlp16 = 0;
 var GL_position_index_hdl32e_12 = 0;
 var GL_position_index_hdl32e_11 = 0;
 var GL_position_index_hdl32e_9 = 0;
+
 // Setup look-up table for interleaved vertical layers.
 const verticalAngles16 = [-15.0, -13.0, -11.0, -9.0, -7.0, -5.0, -3.0, -1.0, 1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0];
-const verticalAngles12 = [-30.67, -29.33, -25.33, -21.32, -17.32, -13.31, -9.31, -5.3, -1.3, 2.71, 6.71, 10.72];
-const verticalAngles11 = [-28.0, -26.66, -22.66, -18.65, -14.65, -10.64, -6.64, -2.63, 1.37, 5.38, 9.38];
-const verticalAngles9 = [-23.99, -19.99, -15.98, -11.98, -7.97, -3.97, 0.04, 4.04, 8.05];
+const verticalAngles12_hdl32e = [-30.67, -29.33, -25.33, -21.32, -17.32, -13.31, -9.31, -5.3, -1.3, 2.71, 6.71, 10.72];
+const verticalAngles11_hdl32e = [-28.0, -26.66, -22.66, -18.65, -14.65, -10.64, -6.64, -2.63, 1.37, 5.38, 9.38];
+const verticalAngles9_hdl32e = [-23.99, -19.99, -15.98, -11.98, -7.97, -3.97, 0.04, 4.04, 8.05];
+
+const verticalAngles12_vlp32c = [ -25.0, -15.639, -7.254, -4.667, -3.333, -2.333, -1.333, -0.333, 0.667, 1.667, 4.667, 15.0 ];
+const verticalAngles11_vlp32c = [ -11.31, -8.843, -5.333, -3.667, -2.667, -1.667, -0.667, 0.333, 1.333, 3.333, 10.333 ];
+const verticalAngles9_vlp32c = [ -6.148, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.333, 7.0 ];
 
 var g_perception = {
     front : 0,
@@ -344,6 +349,21 @@ function processEnvelope(incomingData) {
         document.getElementById('ego-3dview').style.visibility = "visible";
         // CompactPointCloud
         var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
+
+        // Differentiate between HDL32e and VLP32c.
+        var verticalAngles12;
+        var verticalAngles11;
+        var verticalAngles9;
+        if (0 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+            verticalAngles12 = verticalAngles12_hdl32e;
+            verticalAngles11 = verticalAngles11_hdl32e;
+            verticalAngles9 = verticalAngles9_hdl32e;
+        }
+        else if (1 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+            verticalAngles12 = verticalAngles12_vlp32c;
+            verticalAngles11 = verticalAngles11_vlp32c;
+            verticalAngles9 = verticalAngles9_vlp32c;
+        }
 
         var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
         var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
