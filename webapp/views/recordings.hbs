@@ -199,7 +199,7 @@ function toggleMessageViewFromTop() {
                 var __libcluon = libcluon();
                 var res = "0";
                 try {
-                    // Always add the messages to control the player.
+                    // Always add the messages to control the remote player and to actuation request.
                     var playerMessages = `
 
 message cluon.data.PlayerCommand [id = 9] {
@@ -211,6 +211,13 @@ message cluon.data.PlayerStatus [id = 10] {
     uint8 state [id = 1]; // 0 = unknown, 1 = loading file, 2 = playback
     uint32 numberOfEntries [id = 2];
     uint32 currentEntryForPlayback [id = 3];
+}
+
+// This message is a legacy one to support controlling Snowfox and Rhino.
+message opendlv.proxy.ActuationRequest [id = 160] {
+  float acceleration [id = 1];
+  float steering [id = 2];
+  bool isValid [id = 3];
 }
 `;
                     content += playerMessages;

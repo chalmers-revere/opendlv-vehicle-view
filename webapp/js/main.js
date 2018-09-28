@@ -602,6 +602,30 @@ function setupUI() {
             $("#connectionStatusText").html("OpenDLV Vehicle View (connected)");
 
             var odvd = getResourceFrom(ODVD_FILE);
+            {
+                // Always add the messages to control the remote player and to actuation request.
+                var playerMessages = `
+
+message cluon.data.PlayerCommand [id = 9] {
+    uint8 command [id = 1]; // 0 = nothing, 1 = play, 2 = pause, 3 = seekTo, 4 = step
+    float seekTo [id = 2];
+}
+
+message cluon.data.PlayerStatus [id = 10] {
+    uint8 state [id = 1]; // 0 = unknown, 1 = loading file, 2 = playback
+    uint32 numberOfEntries [id = 2];
+    uint32 currentEntryForPlayback [id = 3];
+}
+
+// This message is a legacy one to support controlling Snowfox and Rhino.
+message opendlv.proxy.ActuationRequest [id = 160] {
+  float acceleration [id = 1];
+  float steering [id = 2];
+  bool isValid [id = 3];
+}
+`;
+                odvd += playerMessages;
+            }
             console.log("Loaded " + g_libcluon.setMessageSpecification(odvd) + " messages from specification '" + ODVD_FILE + "'.");
 
             // Establish WebRTC connection (only when we are not running locally).

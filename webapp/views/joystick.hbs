@@ -259,6 +259,19 @@
             document.getElementById("connectionStatusText").innerHTML = "connected";
 
             var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.7.odvd");
+            {
+                // Always add the messages to control the player.
+                var actuationRequestMessage = `
+
+// This message is a legacy one to support controlling Snowfox and Rhino.
+message opendlv.proxy.ActuationRequest [id = 160] {
+  float acceleration [id = 1];
+  float steering [id = 2];
+  bool isValid [id = 3];
+}
+`;
+                odvd += actuationRequestMessage;
+            }
             console.log("Loaded " + __libcluon.setMessageSpecification(odvd) + " messages from specification.");
         };
 
