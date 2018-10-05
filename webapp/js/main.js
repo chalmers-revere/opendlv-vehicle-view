@@ -25,6 +25,7 @@ var g_sendFromCode = false;
 
 var g_map;
 var g_gnuplot;
+var g_gnuplotDoPlot = false;
 var g_mapOfDataForGnuplot = {};
 
 const MAX_POINTS_vlp16 = 63000;
@@ -221,7 +222,7 @@ function processEnvelope(incomingData) {
             }
 
             // Plot data.
-            if (!g_gnuplot.isRunning) {
+            if (!g_gnuplot.isRunning && g_gnuplotDoPlot) {
                 gnuplot_runScript();
             }
         }
@@ -259,6 +260,8 @@ function processEnvelope(incomingData) {
             sensor = IRleft;
             sensorOffset = IRleftOffset;
             g_perception.left = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [0, 0, 0, 0, 0, 0, 0, 0, distance, distance, distance, 0];
         }
         else if (3 == data.senderStamp) {
             // IR right.
@@ -267,10 +270,10 @@ function processEnvelope(incomingData) {
             sensor = IRright;
             sensorOffset = IRrightOffset;
             g_perception.right = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [0, 0, distance, distance, distance, 0, 0, 0, 0, 0, 0, 0];
         }
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+0)%12] = distance;
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+1)%12] = distance;
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+2)%12] = distance;
+
         sensorView.update(0);
     }
 
@@ -288,34 +291,40 @@ function processEnvelope(incomingData) {
             sensor = USfront;
             sensorOffset = USfrontOffset;
             g_perception.front = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [distance, distance, 0, 0, 0, 0, 0, 0, 0, 0, 0, distance];
         }
         else if (2 == data.senderStamp) {
             // Ultrasound rear.
-            const USrear = 1;
+            const USrear = 2;
             const USrearOffset = 5;
             sensor = USrear;
             sensorOffset = USrearOffset;
             g_perception.rear = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [0, 0, 0, 0, 0, distance, distance, distance, 0, 0, 0, 0];
         }
-//        else if (1 == data.senderStamp) {
-//            // IR left.
-//            const IRleft = 2;
-//            const IRleftOffset = 8;
-//            sensor = IRleft;
-//            sensorOffset = IRleftOffset;
-//            g_perception.left = distance;
-//        }
-//        else if (3 == data.senderStamp) {
-//            // IR right.
-//            const IRright = 3;
-//            const IRrightOffset = 2;
-//            sensor = IRright;
-//            sensorOffset = IRrightOffset;
-//            g_perception.right = distance;
-//        }
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+0)%12] = distance;
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+1)%12] = distance;
-        sensorView.chart.data.datasets[sensor].data[(sensorOffset+2)%12] = distance;
+        else if (1 == data.senderStamp) {
+            // IR left.
+            const IRleft = 1;
+            const IRleftOffset = 8;
+            sensor = IRleft;
+            sensorOffset = IRleftOffset;
+            g_perception.left = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [0, 0, 0, 0, 0, 0, 0, 0, distance, distance, distance, 0];
+        }
+        else if (3 == data.senderStamp) {
+            // IR right.
+            const IRright = 3;
+            const IRrightOffset = 2;
+            sensor = IRright;
+            sensorOffset = IRrightOffset;
+            g_perception.right = distance;
+
+            sensorView.chart.data.datasets[sensor].data = [0, 0, distance, distance, distance, 0, 0, 0, 0, 0, 0, 0];
+        }
+
         sensorView.update(0);
     }
 
@@ -346,219 +355,221 @@ function processEnvelope(incomingData) {
 
     // opendlv_proxy_PointCloudReading
     if (49 == data.dataType) {
-        document.getElementById('ego-3dview').style.visibility = "visible";
-        // CompactPointCloud
-        var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
+        if ("Kiwi" != g_vehicle) {
+            document.getElementById('ego-3dview').style.visibility = "visible";
+            // CompactPointCloud
+            var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
 
-        // Differentiate between HDL32e and VLP32c.
-        var verticalAngles12;
-        var verticalAngles11;
-        var verticalAngles9;
-        if (0 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
-            verticalAngles12 = verticalAngles12_hdl32e;
-            verticalAngles11 = verticalAngles11_hdl32e;
-            verticalAngles9 = verticalAngles9_hdl32e;
-        }
-        else if (1 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
-            verticalAngles12 = verticalAngles12_vlp32c;
-            verticalAngles11 = verticalAngles11_vlp32c;
-            verticalAngles9 = verticalAngles9_vlp32c;
-        }
+            // Differentiate between HDL32e and VLP32c.
+            var verticalAngles12;
+            var verticalAngles11;
+            var verticalAngles9;
+            if (0 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+                verticalAngles12 = verticalAngles12_hdl32e;
+                verticalAngles11 = verticalAngles11_hdl32e;
+                verticalAngles9 = verticalAngles9_hdl32e;
+            }
+            else if (1 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+                verticalAngles12 = verticalAngles12_vlp32c;
+                verticalAngles11 = verticalAngles11_vlp32c;
+                verticalAngles9 = verticalAngles9_vlp32c;
+            }
 
-        var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
-        var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
-        var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
-        var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
-        var numberOfPoints = distances.length / 2;
-        var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
-        var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
+            var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
+            var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
+            var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
+            var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
+            var numberOfPoints = distances.length / 2;
+            var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
+            var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
 
-        var GL_positions_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.position.array;
-        var GL_colors_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.color.array;
+            var GL_positions_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.position.array;
+            var GL_colors_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.color.array;
 
-        var GL_positions_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
-        var GL_colors_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+            var GL_positions_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+            var GL_colors_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
 
-        var GL_positions_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
-        var GL_colors_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+            var GL_positions_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
+            var GL_colors_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
 
-        var GL_positions_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
-        var GL_colors_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
+            var GL_positions_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
+            var GL_colors_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
 
-        // VLP16 sends 16 layers,
-        if (16 == entriesPerAzimuth) {
-            GL_positions_vlp16.fill(0);
-            GL_colors_vlp16.fill(0);
-            GL_position_index_vlp16 = 0;
-        }
-        else if (12 == entriesPerAzimuth) {
-            // HDL32e sends the sequence 12, 11, 9 layers.
-            GL_positions_hdl32e_12.fill(0);
-            GL_colors_hdl32e_12.fill(0);
-            GL_position_index_hdl32e_12 = 0;
-        }
-        else if (11 == entriesPerAzimuth) {
-            GL_positions_hdl32e_11.fill(0);
-            GL_colors_hdl32e_11.fill(0);
-            GL_position_index_hdl32e_11 = 0;
-        }
-        else if (9 == entriesPerAzimuth) {
-            GL_positions_hdl32e_9.fill(0);
-            GL_colors_hdl32e_9.fill(0);
-            GL_position_index_hdl32e_9 = 0;
-        }
+            // VLP16 sends 16 layers,
+            if (16 == entriesPerAzimuth) {
+                GL_positions_vlp16.fill(0);
+                GL_colors_vlp16.fill(0);
+                GL_position_index_vlp16 = 0;
+            }
+            else if (12 == entriesPerAzimuth) {
+                // HDL32e sends the sequence 12, 11, 9 layers.
+                GL_positions_hdl32e_12.fill(0);
+                GL_colors_hdl32e_12.fill(0);
+                GL_position_index_hdl32e_12 = 0;
+            }
+            else if (11 == entriesPerAzimuth) {
+                GL_positions_hdl32e_11.fill(0);
+                GL_colors_hdl32e_11.fill(0);
+                GL_position_index_hdl32e_11 = 0;
+            }
+            else if (9 == entriesPerAzimuth) {
+                GL_positions_hdl32e_9.fill(0);
+                GL_colors_hdl32e_9.fill(0);
+                GL_position_index_hdl32e_9 = 0;
+            }
 
-        var index = 0;
-        var azimuth = startAzimuth;
-        for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
-            for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
-                var verticalAngle = 0;
-                if (16 == entriesPerAzimuth) {
-                    verticalAngle = verticalAngles16[sensorIndex];
-                }
-                else if (12 == entriesPerAzimuth) {
-                    verticalAngle = verticalAngles12[sensorIndex];
-                }
-                else if (11 == entriesPerAzimuth) {
-                    verticalAngle = verticalAngles11[sensorIndex];
-                }
-                else if (9 == entriesPerAzimuth) {
-                    verticalAngle = verticalAngles9[sensorIndex];
-                }
-
-                var byte0 = distances.charCodeAt(index++);
-                var byte1 = distances.charCodeAt(index++);
-                var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
-
-                var r = 0;
-                var g = 0;
-                var b = 1.0;
-
-                // Extract intensity.
-                if (0 < numberOfBitsForIntensity) {
-                    var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
-                    var extractedIntensity = distance & MASK;
-                    extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
-                    var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
-                    var intensity = extractedIntensity / intensityMaxValue;
-
-                    if ( (intensity > 1.0) || (0 > intensity) ) {
-                        intensity = 0.5;
-                    }
-
-                    // Four color levels: blue, green, yellow, red from low intensity to high intensity
-                    if (intensity < 0.25 + 1e-7) {
-                        r = 0;
-                        g = 0.5 + intensity * 2.0;
-                        b = 1;
-                    } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
-                        r = 0;
-                        g = 0.5 + intensity * 2.0;
-                        b = 0.5;
-                    } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
-                        r = 1;
-                        g = 0.75 + intensity;
-                        b = 0;
-                    } else {
-                        r = 0.55 + intensity;
-                        g = 0;
-                        b = 0;
-                    }
-
-                    // Remove intensity from distance.
-                    distance &= (0xFFFF >> numberOfBitsForIntensity);
-                }
-
-                distance /= 100.0;
-
-                if (distance > 1.0) {
-                    var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
-                    var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
-                    var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
-                    var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
-
+            var index = 0;
+            var azimuth = startAzimuth;
+            for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
+                for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
+                    var verticalAngle = 0;
                     if (16 == entriesPerAzimuth) {
-                        if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
-                            GL_positions_vlp16[GL_position_index_vlp16] = x;
-                            GL_colors_vlp16[GL_position_index_vlp16] = r;
-                            GL_position_index_vlp16++;
-
-                            GL_positions_vlp16[GL_position_index_vlp16] = z;
-                            GL_colors_vlp16[GL_position_index_vlp16] = g;
-                            GL_position_index_vlp16++;
-
-                            GL_positions_vlp16[GL_position_index_vlp16] = -y;
-                            GL_colors_vlp16[GL_position_index_vlp16] = b;
-                            GL_position_index_vlp16++;
-                        }
-
+                        verticalAngle = verticalAngles16[sensorIndex];
                     }
                     else if (12 == entriesPerAzimuth) {
-                        if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
-                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
-                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
-                            GL_position_index_hdl32e_12++;
-
-                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
-                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
-                            GL_position_index_hdl32e_12++;
-
-                            GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
-                            GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
-                            GL_position_index_hdl32e_12++;
-                        }
+                        verticalAngle = verticalAngles12[sensorIndex];
                     }
                     else if (11 == entriesPerAzimuth) {
-                        if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
-                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
-                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
-                            GL_position_index_hdl32e_11++;
-
-                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
-                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
-                            GL_position_index_hdl32e_11++;
-
-                            GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
-                            GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
-                            GL_position_index_hdl32e_11++;
-                        }
+                        verticalAngle = verticalAngles11[sensorIndex];
                     }
                     else if (9 == entriesPerAzimuth) {
-                        if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
-                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
-                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
-                            GL_position_index_hdl32e_9++;
+                        verticalAngle = verticalAngles9[sensorIndex];
+                    }
 
-                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
-                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
-                            GL_position_index_hdl32e_9++;
+                    var byte0 = distances.charCodeAt(index++);
+                    var byte1 = distances.charCodeAt(index++);
+                    var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
 
-                            GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
-                            GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
-                            GL_position_index_hdl32e_9++;
+                    var r = 0;
+                    var g = 0;
+                    var b = 1.0;
+
+                    // Extract intensity.
+                    if (0 < numberOfBitsForIntensity) {
+                        var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
+                        var extractedIntensity = distance & MASK;
+                        extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
+                        var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
+                        var intensity = extractedIntensity / intensityMaxValue;
+
+                        if ( (intensity > 1.0) || (0 > intensity) ) {
+                            intensity = 0.5;
+                        }
+
+                        // Four color levels: blue, green, yellow, red from low intensity to high intensity
+                        if (intensity < 0.25 + 1e-7) {
+                            r = 0;
+                            g = 0.5 + intensity * 2.0;
+                            b = 1;
+                        } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
+                            r = 0;
+                            g = 0.5 + intensity * 2.0;
+                            b = 0.5;
+                        } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
+                            r = 1;
+                            g = 0.75 + intensity;
+                            b = 0;
+                        } else {
+                            r = 0.55 + intensity;
+                            g = 0;
+                            b = 0;
+                        }
+
+                        // Remove intensity from distance.
+                        distance &= (0xFFFF >> numberOfBitsForIntensity);
+                    }
+
+                    distance /= 100.0;
+
+                    if (distance > 1.0) {
+                        var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
+                        var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
+                        var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
+                        var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
+
+                        if (16 == entriesPerAzimuth) {
+                            if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
+                                GL_positions_vlp16[GL_position_index_vlp16] = x;
+                                GL_colors_vlp16[GL_position_index_vlp16] = r;
+                                GL_position_index_vlp16++;
+
+                                GL_positions_vlp16[GL_position_index_vlp16] = z;
+                                GL_colors_vlp16[GL_position_index_vlp16] = g;
+                                GL_position_index_vlp16++;
+
+                                GL_positions_vlp16[GL_position_index_vlp16] = -y;
+                                GL_colors_vlp16[GL_position_index_vlp16] = b;
+                                GL_position_index_vlp16++;
+                            }
+
+                        }
+                        else if (12 == entriesPerAzimuth) {
+                            if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
+                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                                GL_position_index_hdl32e_12++;
+
+                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                                GL_position_index_hdl32e_12++;
+
+                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                                GL_position_index_hdl32e_12++;
+                            }
+                        }
+                        else if (11 == entriesPerAzimuth) {
+                            if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
+                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
+                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
+                                GL_position_index_hdl32e_11++;
+
+                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
+                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
+                                GL_position_index_hdl32e_11++;
+
+                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
+                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
+                                GL_position_index_hdl32e_11++;
+                            }
+                        }
+                        else if (9 == entriesPerAzimuth) {
+                            if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
+                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
+                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
+                                GL_position_index_hdl32e_9++;
+
+                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
+                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
+                                GL_position_index_hdl32e_9++;
+
+                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
+                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
+                                GL_position_index_hdl32e_9++;
+                            }
                         }
                     }
                 }
+                azimuth += azimuthIncrement;
             }
-            azimuth += azimuthIncrement;
-        }
 
-        // Trigger update
-        if (16 == entriesPerAzimuth) {
-            g_particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
-            g_particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
-        }
-        else if (12 == entriesPerAzimuth) {
-            g_particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
-            g_particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
-        }
-        else if (11 == entriesPerAzimuth) {
-            g_particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
-            g_particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
-        }
-        else if (9 == entriesPerAzimuth) {
-            g_particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
-            g_particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+            // Trigger update
+            if (16 == entriesPerAzimuth) {
+                g_particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
+                g_particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
+            }
+            else if (12 == entriesPerAzimuth) {
+                g_particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+                g_particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
+            }
+            else if (11 == entriesPerAzimuth) {
+                g_particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
+                g_particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
+            }
+            else if (9 == entriesPerAzimuth) {
+                g_particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
+                g_particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+            }
         }
     }
 
@@ -741,7 +752,9 @@ message opendlv.proxy.ActuationRequest [id = 160] {
     setupGnuplot();
 
     ////////////////////////////////////////////////////////////////////////////
-    setupPointCloudView();
+    if ("Kiwi" != g_vehicle) {
+        setupPointCloudView();
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     g_map = new maptalks.Map("map",{
@@ -875,7 +888,7 @@ message opendlv.proxy.ActuationRequest [id = 160] {
 //                    .map(c => c.charCodeAt(0))).buffer;
 
 //                // Instead of sending the raw bytes, we encapsulate them into a JSON object.
-                ws.send(strToAB(output), { binary: true });
+//                g_ws.send(strToAB(output), { binary: true });
             }
 
             var actuationCommands = "{\"virtualjoystick\":" +
@@ -982,6 +995,7 @@ plot "opendlv_proxy_DistanceReading.0" using 1 title 'US front' with lines, \
     }
 
     if ("" != plottingCode) {
+        g_gnuplotDoPlot = true;
         document.getElementById("gnuplot-script").value = plottingCode;
         if (!g_gnuplot.isRunning) {
             gnuplot_runScript();
@@ -990,6 +1004,7 @@ plot "opendlv_proxy_DistanceReading.0" using 1 title 'US front' with lines, \
 }
 
 function plotSignals(val) {
+    g_gnuplotDoPlot = true;
     var plottingCode = "# Example for plotting " + val + " data using gnuplot.\n";
     plottingCode += `set terminal svg size 500,400 enhanced fname 'arial' fsize 5 solid
 set output 'out.svg'    # Output must always be named 'out.svg' to display.
@@ -1039,11 +1054,16 @@ function gnuplot_scriptChange() {
     }
     else {
         g_lastTAContent = val;
+        g_gnuplotDoPlot = true;
         gnuplot_runScript();
     }
 }
 
 var gnuplot_runScript = function() {
+    if (!g_gnuplotDoPlot) {
+        return;
+    }
+
     var editor = document.getElementById('gnuplot-script');
     var start = Date.now();
 
@@ -1053,29 +1073,32 @@ var gnuplot_runScript = function() {
     }
 
     g_gnuplot.run(editor.value, function(e) {
-        g_gnuplot.onOutput('Plotting took ' + (Date.now() - start) / 1000 + 's.');
-        g_gnuplot.getFile('out.svg', function(e) {
-            if (!e.content) {
-                g_gnuplot.onError("Output file out.svg not found!");
-                return;
-            }
-            var img = document.getElementById('gnuplot-img');
-            try {
-                var ab = new Uint8Array(e.content);
-                var blob = new Blob([ab], {"type": "image\/svg+xml"});
-                window.URL = window.URL || window.webkitURL;
-                img.src = window.URL.createObjectURL(blob);
-            } catch (err) { // in case blob / URL missing, fallback to data-uri
-                if (!window.blobalert) {
-                    alert('Warning - your browser does not support Blob-URLs, using data-uri with a lot more memory and time required. Err: ' + err);
-                    window.blobalert = true;
+        try {
+            g_gnuplot.onOutput('Plotting took ' + (Date.now() - start) / 1000 + 's.');
+            g_gnuplot.getFile('out.svg', function(e) {
+                if (!e.content) {
+                    g_gnuplot.onError("Output file out.svg not found!");
+                    return;
                 }
-                var rstr = '';
-                for (var i = 0; i < e.content.length; i++)
-                    rstr += String.fromCharCode(e.content[i]);
-                img.src = 'data:image\/svg+xml;base64,' + btoa(rstr);
-            }
-        });
+                var img = document.getElementById('gnuplot-img');
+                try {
+                    var ab = new Uint8Array(e.content);
+                    var blob = new Blob([ab], {"type": "image\/svg+xml"});
+                    window.URL = window.URL || window.webkitURL;
+                    img.src = window.URL.createObjectURL(blob);
+                } catch (err) { // in case blob / URL missing, fallback to data-uri
+                    if (!window.blobalert) {
+                        alert('Warning - your browser does not support Blob-URLs, using data-uri with a lot more memory and time required. Err: ' + err);
+                        window.blobalert = true;
+                    }
+                    var rstr = '';
+                    for (var i = 0; i < e.content.length; i++)
+                        rstr += String.fromCharCode(e.content[i]);
+                    img.src = 'data:image\/svg+xml;base64,' + btoa(rstr);
+                }
+            });
+        }
+        catch (err) {}
     });
 }
 

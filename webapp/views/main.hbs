@@ -424,14 +424,14 @@ actuation.steering = 0.3;
     <script type="text/javascript" src="js/mini-decoder.js"></script>
     <script type="text/javascript" src="js/gnuplot_api.js"></script>
 
-<!--
+{{#if platformIsKiwi}}
     <script type="text/javascript" src="js/src-min-noconflict/ace.js" charset="utf-8"></script>
     <script>
         var editor = ace.edit("editor");
         editor.setTheme("ace/theme/eclipse");
         editor.session.setMode("ace/mode/javascript");
     </script>
--->
+{{/if}}
 
 <script>
 var g_vehicle = "{{g_vehicle}}";
