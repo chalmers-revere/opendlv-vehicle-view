@@ -32,10 +32,12 @@ var OPENDLV_VEHICLE_VIEW_PLATFORM = process.env.OPENDLV_VEHICLE_VIEW_PLATFORM ||
 const PLATFORM_IS_SNOWFOX = "Snowfox" == OPENDLV_VEHICLE_VIEW_PLATFORM;
 const PLATFORM_IS_RHINO = "Rhino" == OPENDLV_VEHICLE_VIEW_PLATFORM;
 const PLATFORM_IS_KIWI = "Kiwi" == OPENDLV_VEHICLE_VIEW_PLATFORM;
+const ENABLE_KIWI_SIMULATION = (process.env.OPENDLV_VEHICLE_VIEW_ENABLE_KIWI_SIMULATION == "1") || false;
 var g_config = { g_vehicle: OPENDLV_VEHICLE_VIEW_PLATFORM,
                  platformIsSnowfox: PLATFORM_IS_SNOWFOX,
                  platformIsRhino: PLATFORM_IS_RHINO,
-                 platformIsKiwi: PLATFORM_IS_KIWI };
+                 platformIsKiwi: PLATFORM_IS_KIWI,
+                 enableKiwiSimulation: ENABLE_KIWI_SIMULATION };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Killing process groups (used to stop cluon-OD4toStdout.

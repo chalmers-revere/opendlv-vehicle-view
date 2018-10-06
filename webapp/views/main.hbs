@@ -155,7 +155,7 @@
                 <div class="col-md-12">
                     <br>
                     <center>
-                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - v0.0.41"></i>
+                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - v0.0.42"></i>
                     <div id="connectionStatusText">OpenDLV Vehicle View (disconnected)</div>
                     </center>
                 </div>
@@ -216,6 +216,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#panel-plot" data-toggle="tab">Plot</a>
                     </li>
+{{#if enableKiwiSimulation}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#panel-simulation" data-toggle="tab">Simulation</a>
+                    </li>
+{{/if}}
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane active show" id="panel-feed">
@@ -350,7 +355,6 @@
                         </div>
                     </div>
 
-
                     <div class="tab-pane" id="panel-plot">
                         <div class="row">
                             <div class="col-md-12">
@@ -378,6 +382,18 @@
                             </div>
                         </div>
                     </div>
+
+{{#if enableKiwiSimulation}}
+                    <div class="tab-pane" id="panel-simulation">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <center>
+                                <canvas id="simulation-canvas" width="640" height="480" style="border: 1px solid black;"></canvas>
+                                </center>
+                            </div>
+                        </div>
+                    </div>
+{{/if}}
 
                 </div>
             </div>
@@ -439,7 +455,8 @@ actuation.steering = 0.3;
 {{/if}}
 
 <script>
-var g_vehicle = "{{g_vehicle}}";
+const g_vehicle = "{{g_vehicle}}";
+const g_enableKiwiSimulation = {{enableKiwiSimulation}};
 </script>
 
 {{#if livePage}}
