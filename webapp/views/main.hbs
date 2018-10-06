@@ -204,9 +204,12 @@
                     <li class="nav-item">
                         <a class="nav-link active show" href="#panel-feed" data-toggle="tab">Overview</a>
                     </li>
+{{#if platformIsKiwi}}
+{{else}}
                     <li class="nav-item">
                         <a class="nav-link" href="#panel-map" data-toggle="tab">Map</a>
                     </li>
+{{/if}}
                     <li class="nav-item">
                         <a class="nav-link" href="#panel-signals" data-toggle="tab">Messages</a>
                     </li>
@@ -230,7 +233,8 @@
 {{#if platformIsRhino}}
                                 <div id="ego-3dview"></div>
 {{/if}}
-
+                                <br>
+                                <br>
                             </div>
                             <div class="col-md-2">
 {{#if livePage}}
@@ -322,6 +326,7 @@
                                     </tbody>
                                 </table>
                                 </center>
+                                <br>
                                 <br>
                                 <br>
                                 <br>
