@@ -354,6 +354,9 @@ message opendlv.proxy.ActuationRequest [id = 160] {
             if ("Snowfox" == g_vehicle) {
                 steering *= -1.0;
             }
+            if ("Rhino" == g_vehicle) {
+                steering *= -1.0;
+            }
 
             var maxAcceleration = Number(document.getElementById("maxAcceleration").value);
             var maxDeceleration = Number(document.getElementById("maxDeceleration").value);
