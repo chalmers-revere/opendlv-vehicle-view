@@ -631,7 +631,7 @@ function setupUI() {
             if (IS_PLAYBACK_PAGE) {
                 var lastIndex = FILENAME_TO_REPLAY.lastIndexOf('/');
                 var filename = FILENAME_TO_REPLAY.substr(lastIndex + 1);
-                $("#filenameCurrentlyReplaying").html("<a href=\"" + filename + "\" style=\"font-size: 10px; text-decoration: none\">" + filename + "</a>");
+                $("#filenameCurrentlyReplaying").html("<a href=\"" + FILENAME_TO_REPLAY + "\" style=\"font-size: 10px; text-decoration: none\">" + filename + "</a>");
             }
 
             var odvd = getResourceFrom(ODVD_FILE);
