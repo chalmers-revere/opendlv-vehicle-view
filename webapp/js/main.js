@@ -628,8 +628,14 @@ function setupUI() {
             $("#connectionStatusText").css("color", "#3CB371");
             $("#connectionStatusText").html("OpenDLV Vehicle View (connected)");
 
+            if (IS_PLAYBACK_PAGE) {
+                var lastIndex = FILENAME_TO_REPLAY.lastIndexOf('/');
+                var filename = FILENAME_TO_REPLAY.substr(lastIndex + 1);
+                $("#filenameCurrentlyReplaying").html("<a href=\"" + filename + "\" style=\"font-size: 10px; text-decoration: none\">" + filename + "</a>");
+            }
+
             var odvd = getResourceFrom(ODVD_FILE);
-            {
+            if (!HAS_EXTERNAL_ODVD_FILE) {
                 // Always add the messages to control the remote player and to actuation request.
                 var playerMessages = `
 

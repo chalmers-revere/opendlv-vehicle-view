@@ -41,6 +41,9 @@ var g_config = { g_vehicle: OPENDLV_VEHICLE_VIEW_PLATFORM,
                  enableKiwiSimulation: ENABLE_KIWI_SIMULATION };
 
 ////////////////////////////////////////////////////////////////////////////////
+var g_fileToReplay = "";
+
+////////////////////////////////////////////////////////////////////////////////
 // Killing process groups (used to stop cluon-OD4toStdout.
 var psTree = require('ps-tree');
 
@@ -96,7 +99,8 @@ app.get("/", function(req, res) {
 app.get("/playback", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
     var conf = { playbackPage: true,
-                 useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile };
+                 useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile,
+                 fileToReplay: g_fileToReplay };
     conf = Object.assign(conf, g_config);
     res.render('main', conf);
 });
@@ -242,6 +246,7 @@ var g_replayRunning = false;
 var g_cluonreplay;
 app.post('/replayrecfile', (req, res) => {
     g_replayRunning = true;
+    g_fileToReplay = req.body.recordingFileToPlay;
     g_cluonreplay = exec('sleep 2 && cluon-replay --keeprunning --cid=' + PLAYBACK_OD4SESSION_CID + ' ' + req.body.recordingFileToPlay);
     console.log('[opendlv-vehicle-view] Started cluon-replay, PID: ' + g_cluonreplay.pid);
 
@@ -261,6 +266,7 @@ app.post('/endreplay', (req, res) => {
         response    : "success"
     });
     g_replayRunning = false;
+    g_fileToReplay = "";
 });
 app.post('/deleterecfile', (req, res) => {
     fs.unlink(req.body.recordingFileToDelete, function() {

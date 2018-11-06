@@ -155,8 +155,11 @@
                 <div class="col-md-12">
                     <br>
                     <center>
-                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - v0.0.43"></i>
+                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - v0.0.44"></i>
                     <div id="connectionStatusText">OpenDLV Vehicle View (disconnected)</div>
+{{#if playbackPage}}
+                    <div id="filenameCurrentlyReplaying">Filename</div>
+{{/if}}
                     </center>
                 </div>
             </div>
@@ -463,21 +466,25 @@ const g_enableKiwiSimulation = {{enableKiwiSimulation}};
 <script>
 const IS_LIVE_PAGE = true;
 const IS_PLAYBACK_PAGE = false;
+const FILENAME_TO_REPLAY = "";
 </script>
 {{/if}}
 {{#if playbackPage}}
 <script>
 const IS_LIVE_PAGE = false;
 const IS_PLAYBACK_PAGE = true;
+const FILENAME_TO_REPLAY = "{{fileToReplay}}";
 </script>
 {{/if}}
 {{#if useExternallySuppliedODVDFile}}
 <script>
 const ODVD_FILE = "external.odvd";
+const HAS_EXTERNAL_ODVD_FILE = true;
 </script>
 {{else}}
 <script>
 const ODVD_FILE = "opendlv-standard-message-set-v0.9.7.odvd";
+const HAS_EXTERNAL_ODVD_FILE = false;
 </script>
 {{/if}}
 
