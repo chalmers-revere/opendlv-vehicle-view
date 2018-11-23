@@ -38,14 +38,17 @@ var g_scrollX = 0;
 var g_scrollY = 0;
 var g_walls = [];
 
+const MAX_POINTS_rplidar = 1000;
 const MAX_POINTS_vlp16 = 63000;
 const MAX_POINTS_hdl32e_12 = 63000;
 const MAX_POINTS_hdl32e_11 = 63000;
 const MAX_POINTS_hdl32e_9 = 63000;
+var g_particles_pointcloud_rplidar;
 var g_particles_pointcloud_vlp16;
 var g_particles_pointcloud_hdl32e_12;
 var g_particles_pointcloud_hdl32e_11;
 var g_particles_pointcloud_hdl32e_9;
+var GL_position_index_rplidar = 0;
 var GL_position_index_vlp16 = 0;
 var GL_position_index_hdl32e_12 = 0;
 var GL_position_index_hdl32e_11 = 0;
@@ -376,215 +379,280 @@ function processEnvelope(incomingData) {
             // CompactPointCloud
             var distances = window.atob(data.opendlv_proxy_PointCloudReading.distances);
 
-            // Differentiate between HDL32e and VLP32c.
-            var verticalAngles12;
-            var verticalAngles11;
-            var verticalAngles9;
-            if (0 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
-                verticalAngles12 = verticalAngles12_hdl32e;
-                verticalAngles11 = verticalAngles11_hdl32e;
-                verticalAngles9 = verticalAngles9_hdl32e;
-            }
-            else if (1 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
-                verticalAngles12 = verticalAngles12_vlp32c;
-                verticalAngles11 = verticalAngles11_vlp32c;
-                verticalAngles9 = verticalAngles9_vlp32c;
-            }
+            if (2 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+                // Render for RPLidar.
+                var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
+                var numberOfPoints = distances.length / 4;
 
-            var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
-            var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
-            var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
-            var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
-            var numberOfPoints = distances.length / 2;
-            var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
-            var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
+                var angles = window.atob(data.opendlv_proxy_PointCloudReading.azimuthAngles);
+                var numberOfAngles = angles.length / 4;
 
-            var GL_positions_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.position.array;
-            var GL_colors_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.color.array;
+                var GL_positions_rplidar = g_particles_pointcloud_rplidar.geometry.attributes.position.array;
+                var GL_colors_rplidar = g_particles_pointcloud_rplidar.geometry.attributes.color.array;
 
-            var GL_positions_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
-            var GL_colors_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+                GL_positions_rplidar.fill(0);
+                GL_colors_rplidar.fill(0);
+                GL_position_index_rplidar = 0;
 
-            var GL_positions_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
-            var GL_colors_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+                var buffer = new ArrayBuffer(4);
+                var f32 = new Float32Array(buffer);
+                var ui8 = new Uint8Array(buffer);
+                var r = 0;
+                var g = 0;
+                var b = 1.0;
 
-            var GL_positions_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
-            var GL_colors_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
+                if (numberOfPoints == numberOfAngles) {
+                    for (var index = 0; index < numberOfPoints; index++) {
+                        ui8[0] = distances.charCodeAt(4*index+0);
+                        ui8[1] = distances.charCodeAt(4*index+1);
+                        ui8[2] = distances.charCodeAt(4*index+2);
+                        ui8[3] = distances.charCodeAt(4*index+3);
 
-            // VLP16 sends 16 layers,
-            if (16 == entriesPerAzimuth) {
-                GL_positions_vlp16.fill(0);
-                GL_colors_vlp16.fill(0);
-                GL_position_index_vlp16 = 0;
-            }
-            else if (12 == entriesPerAzimuth) {
-                // HDL32e sends the sequence 12, 11, 9 layers.
-                GL_positions_hdl32e_12.fill(0);
-                GL_colors_hdl32e_12.fill(0);
-                GL_position_index_hdl32e_12 = 0;
-            }
-            else if (11 == entriesPerAzimuth) {
-                GL_positions_hdl32e_11.fill(0);
-                GL_colors_hdl32e_11.fill(0);
-                GL_position_index_hdl32e_11 = 0;
-            }
-            else if (9 == entriesPerAzimuth) {
-                GL_positions_hdl32e_9.fill(0);
-                GL_colors_hdl32e_9.fill(0);
-                GL_position_index_hdl32e_9 = 0;
-            }
+                        var distance = f32[0];
 
-            var index = 0;
-            var azimuth = startAzimuth;
-            for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
-                for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
-                    var verticalAngle = 0;
-                    if (16 == entriesPerAzimuth) {
-                        verticalAngle = verticalAngles16[sensorIndex];
-                    }
-                    else if (12 == entriesPerAzimuth) {
-                        verticalAngle = verticalAngles12[sensorIndex];
-                    }
-                    else if (11 == entriesPerAzimuth) {
-                        verticalAngle = verticalAngles11[sensorIndex];
-                    }
-                    else if (9 == entriesPerAzimuth) {
-                        verticalAngle = verticalAngles9[sensorIndex];
-                    }
+                        ui8[0] = angles.charCodeAt(4*index+0);
+                        ui8[1] = angles.charCodeAt(4*index+1);
+                        ui8[2] = angles.charCodeAt(4*index+2);
+                        ui8[3] = angles.charCodeAt(4*index+3);
 
-                    var byte0 = distances.charCodeAt(index++);
-                    var byte1 = distances.charCodeAt(index++);
-                    var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
+                        var azimuth = f32[0];
 
-                    var r = 0;
-                    var g = 0;
-                    var b = 1.0;
+                        const verticalAngle = 0;
 
-                    // Extract intensity.
-                    if (0 < numberOfBitsForIntensity) {
-                        var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
-                        var extractedIntensity = distance & MASK;
-                        extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
-                        var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
-                        var intensity = extractedIntensity / intensityMaxValue;
-
-                        if ( (intensity > 1.0) || (0 > intensity) ) {
-                            intensity = 0.5;
-                        }
-
-                        // Four color levels: blue, green, yellow, red from low intensity to high intensity
-                        if (intensity < 0.25 + 1e-7) {
-                            r = 0;
-                            g = 0.5 + intensity * 2.0;
-                            b = 1;
-                        } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
-                            r = 0;
-                            g = 0.5 + intensity * 2.0;
-                            b = 0.5;
-                        } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
-                            r = 1;
-                            g = 0.75 + intensity;
-                            b = 0;
-                        } else {
-                            r = 0.55 + intensity;
-                            g = 0;
-                            b = 0;
-                        }
-
-                        // Remove intensity from distance.
-                        distance &= (0xFFFF >> numberOfBitsForIntensity);
-                    }
-
-                    distance /= 100.0;
-
-                    if (distance > 1.0) {
                         var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
                         var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
                         var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
                         var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
 
-                        if (16 == entriesPerAzimuth) {
-                            if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
-                                GL_positions_vlp16[GL_position_index_vlp16] = x;
-                                GL_colors_vlp16[GL_position_index_vlp16] = r;
-                                GL_position_index_vlp16++;
+                        if (GL_position_index_rplidar < MAX_POINTS_rplidar-3) {
+                            GL_positions_rplidar[GL_position_index_rplidar] = x;
+                            GL_colors_rplidar[GL_position_index_rplidar] = r;
+                            GL_position_index_rplidar++;
 
-                                GL_positions_vlp16[GL_position_index_vlp16] = z;
-                                GL_colors_vlp16[GL_position_index_vlp16] = g;
-                                GL_position_index_vlp16++;
+                            GL_positions_rplidar[GL_position_index_rplidar] = z;
+                            GL_colors_rplidar[GL_position_index_rplidar] = g;
+                            GL_position_index_rplidar++;
 
-                                GL_positions_vlp16[GL_position_index_vlp16] = -y;
-                                GL_colors_vlp16[GL_position_index_vlp16] = b;
-                                GL_position_index_vlp16++;
-                            }
-
-                        }
-                        else if (12 == entriesPerAzimuth) {
-                            if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
-                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
-                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
-                                GL_position_index_hdl32e_12++;
-
-                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
-                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
-                                GL_position_index_hdl32e_12++;
-
-                                GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
-                                GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
-                                GL_position_index_hdl32e_12++;
-                            }
-                        }
-                        else if (11 == entriesPerAzimuth) {
-                            if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
-                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
-                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
-                                GL_position_index_hdl32e_11++;
-
-                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
-                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
-                                GL_position_index_hdl32e_11++;
-
-                                GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
-                                GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
-                                GL_position_index_hdl32e_11++;
-                            }
-                        }
-                        else if (9 == entriesPerAzimuth) {
-                            if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
-                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
-                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
-                                GL_position_index_hdl32e_9++;
-
-                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
-                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
-                                GL_position_index_hdl32e_9++;
-
-                                GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
-                                GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
-                                GL_position_index_hdl32e_9++;
-                            }
+                            GL_positions_rplidar[GL_position_index_rplidar] = -y;
+                            GL_colors_rplidar[GL_position_index_rplidar] = b;
+                            GL_position_index_rplidar++;
                         }
                     }
                 }
-                azimuth += azimuthIncrement;
+                g_particles_pointcloud_rplidar.geometry.attributes.position.needsUpdate = true;
+                g_particles_pointcloud_rplidar.geometry.attributes.color.needsUpdate = true;
             }
+            else {
+                // Differentiate between HDL32e and VLP32c.
+                var verticalAngles12;
+                var verticalAngles11;
+                var verticalAngles9;
+                if (0 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+                    verticalAngles12 = verticalAngles12_hdl32e;
+                    verticalAngles11 = verticalAngles11_hdl32e;
+                    verticalAngles9 = verticalAngles9_hdl32e;
+                }
+                else if (1 == data.opendlv_proxy_PointCloudReading.typeOfVerticalAngularLayout) {
+                    verticalAngles12 = verticalAngles12_vlp32c;
+                    verticalAngles11 = verticalAngles11_vlp32c;
+                    verticalAngles9 = verticalAngles9_vlp32c;
+                }
 
-            // Trigger update
-            if (16 == entriesPerAzimuth) {
-                g_particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
-                g_particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
-            }
-            else if (12 == entriesPerAzimuth) {
-                g_particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
-                g_particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
-            }
-            else if (11 == entriesPerAzimuth) {
-                g_particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
-                g_particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
-            }
-            else if (9 == entriesPerAzimuth) {
-                g_particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
-                g_particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+                var numberOfBitsForIntensity = data.opendlv_proxy_PointCloudReading.numberOfBitsForIntensity;
+                var startAzimuth = data.opendlv_proxy_PointCloudReading.startAzimuth;
+                var endAzimuth = data.opendlv_proxy_PointCloudReading.endAzimuth;
+                var entriesPerAzimuth = data.opendlv_proxy_PointCloudReading.entriesPerAzimuth;
+                var numberOfPoints = distances.length / 2;
+                var numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
+                var azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;
+
+                var GL_positions_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.position.array;
+                var GL_colors_vlp16 = g_particles_pointcloud_vlp16.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.position.array;
+                var GL_colors_hdl32e_12 = g_particles_pointcloud_hdl32e_12.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.position.array;
+                var GL_colors_hdl32e_11 = g_particles_pointcloud_hdl32e_11.geometry.attributes.color.array;
+
+                var GL_positions_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.position.array;
+                var GL_colors_hdl32e_9 = g_particles_pointcloud_hdl32e_9.geometry.attributes.color.array;
+
+                // VLP16 sends 16 layers,
+                if (16 == entriesPerAzimuth) {
+                    GL_positions_vlp16.fill(0);
+                    GL_colors_vlp16.fill(0);
+                    GL_position_index_vlp16 = 0;
+                }
+                else if (12 == entriesPerAzimuth) {
+                    // HDL32e sends the sequence 12, 11, 9 layers.
+                    GL_positions_hdl32e_12.fill(0);
+                    GL_colors_hdl32e_12.fill(0);
+                    GL_position_index_hdl32e_12 = 0;
+                }
+                else if (11 == entriesPerAzimuth) {
+                    GL_positions_hdl32e_11.fill(0);
+                    GL_colors_hdl32e_11.fill(0);
+                    GL_position_index_hdl32e_11 = 0;
+                }
+                else if (9 == entriesPerAzimuth) {
+                    GL_positions_hdl32e_9.fill(0);
+                    GL_colors_hdl32e_9.fill(0);
+                    GL_position_index_hdl32e_9 = 0;
+                }
+
+                var index = 0;
+                var azimuth = startAzimuth;
+                for (var azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
+                    for (var sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
+                        var verticalAngle = 0;
+                        if (16 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles16[sensorIndex];
+                        }
+                        else if (12 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles12[sensorIndex];
+                        }
+                        else if (11 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles11[sensorIndex];
+                        }
+                        else if (9 == entriesPerAzimuth) {
+                            verticalAngle = verticalAngles9[sensorIndex];
+                        }
+
+                        var byte0 = distances.charCodeAt(index++);
+                        var byte1 = distances.charCodeAt(index++);
+                        var distance = ( ((0xff & byte0) << 8) | (0xff & byte1) );
+
+                        var r = 0;
+                        var g = 0;
+                        var b = 1.0;
+
+                        // Extract intensity.
+                        if (0 < numberOfBitsForIntensity) {
+                            var MASK = ((~(0xFFFF >> numberOfBitsForIntensity))&0xFFFF); // restrict to uint16.
+                            var extractedIntensity = distance & MASK;
+                            extractedIntensity = extractedIntensity >> (16 - numberOfBitsForIntensity);
+                            var intensityMaxValue = Math.round(Math.exp(Math.log(2) * numberOfBitsForIntensity) - 1);
+                            var intensity = extractedIntensity / intensityMaxValue;
+
+                            if ( (intensity > 1.0) || (0 > intensity) ) {
+                                intensity = 0.5;
+                            }
+
+                            // Four color levels: blue, green, yellow, red from low intensity to high intensity
+                            if (intensity < 0.25 + 1e-7) {
+                                r = 0;
+                                g = 0.5 + intensity * 2.0;
+                                b = 1;
+                            } else if (intensity > 0.25 && intensity < 0.5 + 1e-7) {
+                                r = 0;
+                                g = 0.5 + intensity * 2.0;
+                                b = 0.5;
+                            } else if (intensity > 0.5 && intensity < 0.75 + 1e-7) {
+                                r = 1;
+                                g = 0.75 + intensity;
+                                b = 0;
+                            } else {
+                                r = 0.55 + intensity;
+                                g = 0;
+                                b = 0;
+                            }
+
+                            // Remove intensity from distance.
+                            distance &= (0xFFFF >> numberOfBitsForIntensity);
+                        }
+
+                        distance /= 100.0;
+
+                        if (distance > 1.0) {
+                            var xyDistance = distance * Math.cos(verticalAngle * Math.PI/180.0);
+                            var x = xyDistance * Math.sin(azimuth * Math.PI/180.0);
+                            var y = xyDistance * Math.cos(azimuth * Math.PI/180.0);
+                            var z = distance * Math.sin(verticalAngle * Math.PI/180.0);
+
+                            if (16 == entriesPerAzimuth) {
+                                if (GL_position_index_vlp16 < MAX_POINTS_vlp16-3) {
+                                    GL_positions_vlp16[GL_position_index_vlp16] = x;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = r;
+                                    GL_position_index_vlp16++;
+
+                                    GL_positions_vlp16[GL_position_index_vlp16] = z;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = g;
+                                    GL_position_index_vlp16++;
+
+                                    GL_positions_vlp16[GL_position_index_vlp16] = -y;
+                                    GL_colors_vlp16[GL_position_index_vlp16] = b;
+                                    GL_position_index_vlp16++;
+                                }
+
+                            }
+                            else if (12 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_12 < MAX_POINTS_hdl32e_12-3) {
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = x;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = r;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = z;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = g;
+                                    GL_position_index_hdl32e_12++;
+
+                                    GL_positions_hdl32e_12[GL_position_index_hdl32e_12] = -y;
+                                    GL_colors_hdl32e_12[GL_position_index_hdl32e_12] = b;
+                                    GL_position_index_hdl32e_12++;
+                                }
+                            }
+                            else if (11 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_11 < MAX_POINTS_hdl32e_11-3) {
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = x;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = r;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = z;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = g;
+                                    GL_position_index_hdl32e_11++;
+
+                                    GL_positions_hdl32e_11[GL_position_index_hdl32e_11] = -y;
+                                    GL_colors_hdl32e_11[GL_position_index_hdl32e_11] = b;
+                                    GL_position_index_hdl32e_11++;
+                                }
+                            }
+                            else if (9 == entriesPerAzimuth) {
+                                if (GL_position_index_hdl32e_9 < MAX_POINTS_hdl32e_9-3) {
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = x;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = r;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = z;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = g;
+                                    GL_position_index_hdl32e_9++;
+
+                                    GL_positions_hdl32e_9[GL_position_index_hdl32e_9] = -y;
+                                    GL_colors_hdl32e_9[GL_position_index_hdl32e_9] = b;
+                                    GL_position_index_hdl32e_9++;
+                                }
+                            }
+                        }
+                    }
+                    azimuth += azimuthIncrement;
+                }
+
+                // Trigger update
+                if (16 == entriesPerAzimuth) {
+                    g_particles_pointcloud_vlp16.geometry.attributes.position.needsUpdate = true;
+                    g_particles_pointcloud_vlp16.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (12 == entriesPerAzimuth) {
+                    g_particles_pointcloud_hdl32e_12.geometry.attributes.position.needsUpdate = true;
+                    g_particles_pointcloud_hdl32e_12.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (11 == entriesPerAzimuth) {
+                    g_particles_pointcloud_hdl32e_11.geometry.attributes.position.needsUpdate = true;
+                    g_particles_pointcloud_hdl32e_11.geometry.attributes.color.needsUpdate = true;
+                }
+                else if (9 == entriesPerAzimuth) {
+                    g_particles_pointcloud_hdl32e_9.geometry.attributes.position.needsUpdate = true;
+                    g_particles_pointcloud_hdl32e_9.geometry.attributes.color.needsUpdate = true;
+                }
             }
         }
     }
@@ -1287,6 +1355,28 @@ function setupPointCloudView() {
 
     var gridXZ = new THREE.GridHelper(50, 50, 0xff0000, 0xffffff);
     scene.add(gridXZ);
+
+    // Point Cloud for RPlidar:
+    {
+        var pointMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            opacity: 1,
+            vertexColors: THREE.VertexColors
+        });
+
+        var geometry_pointcloud_rplidar = new THREE.BufferGeometry();
+
+        var positions_rplidar = new Float32Array(MAX_POINTS_rplidar * 3); // 3 vertices per point
+        positions_rplidar.fill(0);
+        geometry_pointcloud_rplidar.addAttribute('position', new THREE.BufferAttribute(positions_rplidar, 3));
+
+        var colors_rplidar = new Float32Array(MAX_POINTS_rplidar * 3); // RGB per point
+        colors_rplidar.fill(0);
+        geometry_pointcloud_rplidar.addAttribute('color', new THREE.BufferAttribute(colors_rplidar, 3));
+
+        g_particles_pointcloud_rplidar = new THREE.Points(geometry_pointcloud_rplidar, pointMaterial);
+        scene.add(g_particles_pointcloud_rplidar);
+    }
 
     // Point Cloud for VLP16:
     {
