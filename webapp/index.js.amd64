@@ -42,6 +42,7 @@ var g_config = { g_vehicle: OPENDLV_VEHICLE_VIEW_PLATFORM,
 
 ////////////////////////////////////////////////////////////////////////////////
 var g_fileToReplay = "";
+var g_watchlive = true;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Killing process groups (used to stop cluon-OD4toStdout.
@@ -328,6 +329,14 @@ const WebSocket = require('ws').Server;
 const g_ws = new WebSocket({server});
 var g_latestWSConnection = null;
 g_ws.on('connection', function connection(conn) {
+    conn.on('close', function(reasonCode, description) {
+        // Connection closed.
+        // Reset watching live.
+        if (!g_watchlive) {
+            console.log("[opendlv-vehicle-view] Connection lost; re-enabling data forwarding from live session.");
+        }
+        g_watchlive = true;
+    });
     conn.on('message', function(msg) {
         try {
             if ( /* Ensure we have pure JSON. */ (msg[0] == '{') && (msg[msg.length-1] == '}') ) {
@@ -341,6 +350,15 @@ g_ws.on('connection', function connection(conn) {
                         else {
                             try { kill(g_cluonOD4toStdout.pid); } catch (e) { console.log(e); }
                             console.log('[opendlv-vehicle-view] Stopped cluon-OD4toStdout, PID: ' + g_cluonOD4toStdout.pid);
+                        }
+                    }
+                    if ('watchlive' == key) {
+                        g_watchlive = data.watchlive;
+                        if (data.watchlive) {
+                            console.log('[opendlv-vehicle-view] Enabling data forwarding from live session.');
+                        }
+                        else {
+                            console.log('[opendlv-vehicle-view] Disabling data forwarding from live session.');
                         }
                     }
                     if ('remoteplayback' == key) {
@@ -388,7 +406,7 @@ var broadcastMessage = function (msg, fromLive) {
          ( (!fromLive && g_replayRunning) /* or from replay OD4Session but not from both. */ ) ) {
         var failed = false;
         try {
-            if ( (null != g_channel) && (g_useWebRTC) ) {
+            if ( (null != g_channel) && (g_useWebRTC) && g_watchlive ) {
                 // Use WebRTC.
                 g_channel.send(msg);
             }
@@ -397,11 +415,13 @@ var broadcastMessage = function (msg, fromLive) {
         }
 
         if ( (null == g_channel) || (!g_useWebRTC) || failed) {
-            g_ws.clients.forEach(function each(client) {
-                if (client.readyState == 1 /*WebSocket.OPEN*/) {
-                    client.send(msg);
-                }
-            });
+            if (g_watchlive) {
+                g_ws.clients.forEach(function each(client) {
+                    if (client.readyState == 1 /*WebSocket.OPEN*/) {
+                        client.send(msg);
+                    }
+                });
+            }
         }
     }
 };

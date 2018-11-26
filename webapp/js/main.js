@@ -1013,11 +1013,13 @@ message opendlv.proxy.ActuationRequest [id = 160] {
         g_watchlive = !g_watchlive;
         if (g_watchlive) {
             $('button#watchlive').css('color', '#3CB371');
-            $('button#watchlive').removeClass("far fa-eye-slash").addClass("far fa-eye");
+            $('button#watchlive').removeClass("fas fa-eye-slash").addClass("fas fa-eye");
+            g_ws.send("{ \"watchlive\": true }", { binary: false });
         }
         else {
             $('button#watchlive').css('color', '#555');
-            $('button#watchlive').removeClass("far fa-eye").addClass("far fa-eye-slash");
+            $('button#watchlive').removeClass("fas fa-eye").addClass("fas fa-eye-slash");
+            g_ws.send("{ \"watchlive\": false }", { binary: false });
         }
     });
 
