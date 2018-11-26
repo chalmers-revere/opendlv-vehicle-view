@@ -1058,7 +1058,7 @@ message opendlv.proxy.ActuationRequest [id = 160] {
                       .replace(/\\'/g, "\\'");
 
             var logMessage = "{\"level\":6,\"description\":\""+ window.btoa(message) + "\"}";
-            var envLogMessage = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(logMessage, 1103 /* message identifier */, 0 /* sender stamp */);
+            var envLogMessage = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(logMessage, 1103 /* message identifier */, 999 /* sender stamp */);
             var envLogMessageAsJSON = "{\"logmessage\":" +
                                       "\"" + window.btoa(envLogMessage) + "\"" + "}";
             g_ws.send(envLogMessageAsJSON);
