@@ -19,7 +19,7 @@ project(rec-metadataToJSON)
 
 ################################################################################
 # Defining the relevant version for libcluon to be used.
-set(CLUON_COMPLETE cluon-complete-v0.0.103.hpp)
+set(CLUON_COMPLETE cluon-complete-v0.0.114.hpp)
 
 ################################################################################
 # This project requires C++14 or newer.
