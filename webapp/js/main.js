@@ -1042,6 +1042,30 @@ message opendlv.proxy.ActuationRequest [id = 160] {
     }, 1/10 /* 10Hz */ * 1000);
 
     ////////////////////////////////////////////////////////////////////////////
+    document.addEventListener('keypress', (event) => {
+        const pressedKey = event.key;
+        var message = prompt("Please enter a comment to send to the OD4Session: ", pressedKey);
+        if ( (null != message) && (message != "") ) {
+            // Escape characters.
+            message = message.replace(/[\\]/g, '\\\\')
+                      .replace(/[\/]/g, '\\/')
+                      .replace(/[\b]/g, '\\b')
+                      .replace(/[\f]/g, '\\f')
+                      .replace(/[\n]/g, '\\n')
+                      .replace(/[\r]/g, '\\r')
+                      .replace(/[\t]/g, '\\t')
+                      .replace(/[\"]/g, '\\"')
+                      .replace(/\\'/g, "\\'");
+
+            var logMessage = "{\"level\":6,\"description\":\""+ window.btoa(message) + "\"}";
+            var envLogMessage = g_libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(logMessage, 1103 /* message identifier */, 0 /* sender stamp */);
+            var envLogMessageAsJSON = "{\"logmessage\":" +
+                                      "\"" + window.btoa(envLogMessage) + "\"" + "}";
+            g_ws.send(envLogMessageAsJSON);
+        }
+    });
+
+    ////////////////////////////////////////////////////////////////////////////
     window.addEventListener("beforeunload", function (e) {
         if (IS_LIVE_PAGE) {
             var confirmationMessage = "Recording is ongoing that will be canceled when leaving this page.";
