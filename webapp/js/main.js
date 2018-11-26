@@ -15,6 +15,7 @@
 
 var g_ws;
 var g_libcluon;
+var g_watchlive = true;
 var g_recording = false;
 var g_buttonPlayState = "play";
 var g_infiniteButton = false;
@@ -250,6 +251,10 @@ function processEnvelope(incomingData) {
                 $msg.appendTo($row);
             }
         }
+    }
+
+    if (!g_watchlive) {
+      return;
     }
 
     // opendlv_proxy_GeodeticWgs84Reading
@@ -1002,6 +1007,19 @@ message opendlv.proxy.ActuationRequest [id = 160] {
             }
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    $('body').on('click', 'button#watchlive', function() {
+        g_watchlive = !g_watchlive;
+        if (g_watchlive) {
+            $('button#watchlive').css('color', '#3CB371');
+            $('button#watchlive').removeClass("far fa-eye-slash").addClass("far fa-eye");
+        }
+        else {
+            $('button#watchlive').css('color', '#555');
+            $('button#watchlive').removeClass("far fa-eye").addClass("far fa-eye-slash");
+        }
+    });
 
     ////////////////////////////////////////////////////////////////////////////
     $('body').on('click', 'button#record', function() {
