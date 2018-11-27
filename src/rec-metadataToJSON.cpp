@@ -22,6 +22,7 @@
 
 // Include the single-file, header-only cluon library.
 #include "cluon-complete.hpp"
+#include "opendlv-standard-message-set.hpp"
 
 #include <ctime>
 
@@ -62,7 +63,10 @@ int32_t main(int32_t argc, char **argv) {
             cluon::Player player(commandlineArguments["rec"], AUTOREWIND, THREADING);
 
             uint32_t numberOfEnvelopes{0};
+
             std::map<std::string, uint32_t> numberOfMessagesPerType{};
+            std::vector<cluon::data::Envelope> envelopesWithOpendlvSystemLogMessage{};
+
             bool timeStampFromFirstEnvelopeSet{false};
             cluon::data::TimeStamp timeStampFromFirstEnvelope;
             cluon::data::TimeStamp timeStampFromLastEnvelope;
@@ -77,42 +81,74 @@ int32_t main(int32_t argc, char **argv) {
                     timeStampFromLastEnvelope = env.sampleTimeStamp();
                     numberOfEnvelopes++;
 
-                    std::stringstream sstrKey;
-                    sstrKey << env.dataType() << "/" << env.senderStamp();
-                    const std::string KEY = sstrKey.str();
-                    numberOfMessagesPerType[KEY]++;
+                    // Count types.
+                    {
+                        std::stringstream sstrKey;
+                        sstrKey << env.dataType() << "/" << env.senderStamp();
+                        const std::string KEY = sstrKey.str();
+                        numberOfMessagesPerType[KEY]++;
+                    }
+                    // Store opendlv.system.LogMessage.
+                    if ( (env.dataType() == opendlv::system::LogMessage::ID()) &&
+                         (env.senderStamp() == 999) ) {
+                        envelopesWithOpendlvSystemLogMessage.push_back(env);
+                    }
+
                 }
             }
 
+            char dateTimeBuffer[26];
             time_t firstSampleTime = timeStampFromFirstEnvelope.seconds();
-            std::string strFirstSampleTime(::ctime(&firstSampleTime));
+            ::ctime_r(&firstSampleTime, dateTimeBuffer);
+            std::string strFirstSampleTime(dateTimeBuffer);
             strFirstSampleTime = strFirstSampleTime.substr(0, strFirstSampleTime.size()-1);
             strFirstSampleTime = stringtoolbox::trim(strFirstSampleTime);
 
             time_t lastSampleTime = timeStampFromLastEnvelope.seconds();
-            std::string strLastSampleTime(::ctime(&lastSampleTime));
+            ::ctime_r(&lastSampleTime, dateTimeBuffer);
+            std::string strLastSampleTime(dateTimeBuffer);
             strLastSampleTime = strLastSampleTime.substr(0, strLastSampleTime.size()-1);
             strLastSampleTime = stringtoolbox::trim(strLastSampleTime);
             std::cout << "{ \"attributes\": [ "
-                      << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}"
-                      << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}"
-                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}";
-
-            for (auto e : numberOfMessagesPerType) {
-                int32_t messageID{0};
-                {
-                    std::string tmp{stringtoolbox::split(e.first, '/').at(0)};
-                    std::stringstream sstr(tmp);
-                    sstr >> messageID;
-                }
-                int32_t senderStamp{0};
-                {
-                    std::string tmp{stringtoolbox::split(e.first, '/').at(1)};
-                    std::stringstream sstr(tmp);
-                    sstr >> senderStamp;
-                }
-                std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << senderStamp << "}";
+                      << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}" << std::endl
+                      << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}" << std::endl
+                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}" << std::endl;
+            // List message counters per type/sender-stamp.
+            {
+              for (auto e : numberOfMessagesPerType) {
+                  int32_t messageID{0};
+                  {
+                      std::string tmp{stringtoolbox::split(e.first, '/').at(0)};
+                      std::stringstream sstr(tmp);
+                      sstr >> messageID;
+                  }
+                  int32_t senderStamp{0};
+                  {
+                      std::string tmp{stringtoolbox::split(e.first, '/').at(1)};
+                      std::stringstream sstr(tmp);
+                      sstr >> senderStamp;
+                  }
+                  std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << senderStamp << "}" << std::endl;
+              }
             }
+            // Export opendlv.system.LogMessage.
+            {
+                for (auto e : envelopesWithOpendlvSystemLogMessage) {
+                    if ( (e.dataType() == opendlv::system::LogMessage::ID()) &&
+                         (e.senderStamp() == 999) ) {
+                        time_t logMessageSampleTime = e.sampleTimeStamp().seconds();
+                        ::ctime_r(&logMessageSampleTime, dateTimeBuffer);
+                        std::string strLogMessageSampleTime(dateTimeBuffer);
+                        strLogMessageSampleTime = strLogMessageSampleTime.substr(0, strLogMessageSampleTime.size()-1);
+                        strLogMessageSampleTime = stringtoolbox::trim(strLogMessageSampleTime);
+
+                        opendlv::system::LogMessage logMessage = cluon::extractMessage<opendlv::system::LogMessage>(std::move(e));
+
+                        std::cout << ",{ \"key\": \"" << strLogMessageSampleTime << "\", \"value\":\"" << logMessage.description() << "\", \"opendlv_system_LogMessage\":true}" << std::endl;
+                    }
+                }
+            }
+            std::cout << ",{ \"key\": \"geojson\", \"value\":\"geojsonObjectBase64encoded\", \"geojson\":true}" << std::endl;
 
             std::cout << " ] }" << std::endl;
         }

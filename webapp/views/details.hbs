@@ -87,6 +87,12 @@ function deleteExternallySuppliedODVDFile() {
         });
     }
 }
+
+{{#each attributes}}
+{{#if geojson}}
+//    var geojson = "{{value}}".replace("&#x3D;", "=");
+{{/if}}
+{{/each}}
 </script>
 
 <center>
@@ -100,12 +106,21 @@ function deleteExternallySuppliedODVDFile() {
 {{/if}}
 {{#if messageID}}
         number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
+{{else if opendlv_system_LogMessage}}
+<i class="far fa-comment"></i> {{key}}: "{{value}}"
+{{else if geojson}}
 {{else}}
         {{key}}
 {{/if}}
         </td>
         <td align="right">
+{{#if messageID}}
         {{value}}
+{{else if opendlv_system_LogMessage}}
+{{else if geojson}}
+{{else}}
+        {{value}}
+{{/if}}
         </td>
     </tr>
 {{/each}}
