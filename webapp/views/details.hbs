@@ -1,70 +1,15 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <link type="text/css" rel="stylesheet" href="css/all.css"/>
+  <title>OpenDLV Vehicle View - Details for '{{name}}'</title>
 
-        <script type="text/javascript" src="js/jquery-3.2.1.slim.min.js"></script>
-
-        <style>
-            * {
-              box-sizing: border-box;
-            }
-
-            .background-image {
-              background-image: url('background.jpg');
-              background-size: cover;
-              display: block;
-              filter: blur(5px);
-              -webkit-filter: blur(5px);
-              height: 800px;
-              left: 0;
-              position: fixed;
-              right: 0;
-              z-index: 1;
-            }
-
-            .content {
-              background: rgba(255, 255, 255, 0.35);
-              border-radius: 3px;
-              box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-              top: 10px;
-              left: 0;
-              position: fixed;
-              margin-left: 20px;
-              margin-right: 20px;
-              right: 0;
-              z-index: 2;
-              padding: 0 10px;
-            }
-
-            .divScroll {
-                overflow:scroll;
-                height:600px;
-                width:90%;
-            }
-        </style>
-    </head>
-
-<div class="background-image"></div>
-
-<div class="content">
-
-<div class="divScroll">
-
-<center>
-<p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='/recordings'"></button></p>
-</center>
-
-<center>
-<div onclick="location.href='{{filename}}'" onmouseover="" style="cursor: pointer;"><h4>{{name}}</h4></div>
-
-{{#if hasODVD}}
-<button id="deleteExternallySuppliedODVDFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteExternallySuppliedODVDFile()" title="&nbsp;Remove provided message specification file.">Remove provided message specification file.</button>
-{{/if}}
-</center>
+  <link type="text/css" rel="stylesheet" href="css/all.css"/>
+  <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+  <link type="text/css" rel="stylesheet" href="css/navbar-top-fixed.css"/>
+</head>
 
 <script>
 function deleteExternallySuppliedODVDFile() {
@@ -94,44 +39,6 @@ function deleteExternallySuppliedODVDFile() {
 {{/if}}
 {{/each}}
 </script>
-
-<center>
-<table cellpadding="2" width="80%">
-    <tr>
-{{#each attributes}}
-    <tr>
-        <td align="left">
-{{#if selectable}}
-<input type="checkbox" id="isSelected-{{key}}" name="isSelected-{{key}}" value="{{messageID}}/{{senderStamp}}" title="Include this message in export."/>
-{{/if}}
-{{#if messageID}}
-        number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
-{{else if opendlv_system_LogMessage}}
-<i class="far fa-comment"></i> {{key}}: "{{value}}"
-{{else if geojson}}
-{{else}}
-        {{key}}
-{{/if}}
-        </td>
-        <td align="right">
-{{#if messageID}}
-        {{value}}
-{{else if opendlv_system_LogMessage}}
-{{else if geojson}}
-{{else}}
-        {{value}}
-{{/if}}
-        </td>
-    </tr>
-{{/each}}
-</table>
-</center>
-
-<br>
-
-<center>
-<button id="exportSelectedMessages" type="button" class="far fa-check-square" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="exportSelectedMessages()" title="Export the selected messages into a new .rec file.">&nbsp;Export the selected messages into a new .rec file.</button>
-</center>
 
 <script>
 var keepString = "";
@@ -177,8 +84,122 @@ function exportSelectedMessages() {
 }
 </script>
 
-</div>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='/recordings'">
+  </nav>
 
+
+  <div class="container-fluid">
+    <center>
+      <div onclick="location.href='{{filename}}'" onmouseover="" style="cursor: pointer;"><h4>{{name}}</h4></div>
+  {{#if hasODVD}}
+      <button id="deleteExternallySuppliedODVDFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteExternallySuppliedODVDFile()" title="&nbsp;Remove provided message specification file.">Remove provided message specification file.</button>
+  {{/if}}
+    </center>
+  </div>
+
+
+  <div class="container-fluid">
+    <div class="tabbable" id="tabs-list">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active show" href="#panel-overview" data-toggle="tab">Overview</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#panel-comments" data-toggle="tab">Comments</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#panel-messages" data-toggle="tab">Messages</a>
+        </li>
+      </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active show" id="panel-overview">
+        <center>
+          <table cellpadding="2" width="60%">
+            {{#each attributes}}
+            <tr>
+              <td align="left">
+              {{#if messageID}}
+              {{else if opendlv_system_LogMessage}}
+              {{else if geojson}}
+              {{else}}
+                      {{key}}
+              {{/if}}
+              </td>
+              <td align="left">
+              {{#if messageID}}
+              {{else if opendlv_system_LogMessage}}
+              {{else if geojson}}
+              {{else}}
+                      {{value}}
+              {{/if}}
+              </td>
+            </tr>
+            {{/each}}
+          </table>
+        </center>
+        <br>
+      </div>
+
+      <div class="tab-pane" id="panel-comments">
+        <center>
+          <table cellpadding="2" width="60%">
+            {{#each attributes}}
+            <tr>
+              <td align="left">
+              {{#if opendlv_system_LogMessage}}
+                <i class="far fa-comment"></i> {{key}}:
+              {{else}}
+              {{/if}}
+              </td>
+              <td align="left">
+              {{#if opendlv_system_LogMessage}}
+                "{{value}}"
+              {{else}}
+              {{/if}}
+              </td>
+            </tr>
+            {{/each}}
+          </table>
+        </center>
+      </div>
+
+      <div class="tab-pane" id="panel-messages">
+        <br>
+        <center><button id="exportSelectedMessages" type="button" class="far fa-check-square" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="exportSelectedMessages()" title="Export the selected messages into a new .rec file.">&nbsp;Export the selected messages into a new .rec file.</button></center>
+        <br>
+        <center>
+          <table cellpadding="2" width="80%">
+            {{#each attributes}}
+            <tr>
+              <td align="left">
+                {{#if selectable}}
+                <input type="checkbox" id="isSelected-{{key}}" name="isSelected-{{key}}" value="{{messageID}}/{{senderStamp}}" title="Include this message in export."/>
+                {{/if}}
+                {{#if messageID}}
+                  number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
+                {{else}}
+                {{/if}}
+              </td>
+              <td align="right">
+              {{#if messageID}}
+                {{value}}
+              {{else}}
+              {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+          </table>
+        </center>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
+  <script type="text/javascript" src="js/popper.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
 </body>
 </html>
 

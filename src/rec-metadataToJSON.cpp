@@ -148,7 +148,7 @@ int32_t main(int32_t argc, char **argv) {
                     }
                 }
             }
-            std::cout << ",{ \"key\": \"geojson\", \"value\":\"geojsonObjectBase64encoded\", \"geojson\":true}" << std::endl;
+            std::cout << ",{ \"key\": \"geojson\", \"value\":\"ewogICJ0eXBlIjogIkZlYXR1cmUiLAogICJnZW9tZXRyeSI6IHsKICAgICJ0eXBlIjogIlBvaW50IiwKICAgICJjb29yZGluYXRlcyI6IFsxMi4wLCA1Ny43XQogIH0sCiAgInByb3BlcnRpZXMiOiB7CiAgICAibmFtZSI6ICJEaW5hZ2F0IElzbGFuZHMiCiAgfQp9\", \"geojson\":true}" << std::endl;
 
             std::cout << " ] }" << std::endl;
         }

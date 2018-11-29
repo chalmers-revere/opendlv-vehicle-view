@@ -1,76 +1,40 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <link type="text/css" rel="stylesheet" href="css/all.css"/>
+  <title>OpenDLV Vehicle View - Recordings</title>
 
-        <style>
-            * {
-              box-sizing: border-box;
-            }
+  <link type="text/css" rel="stylesheet" href="css/all.css"/>
+  <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+  <link type="text/css" rel="stylesheet" href="css/navbar-top-fixed.css"/>
 
-            .background-image {
-              background-image: url('background.jpg');
-              background-size: cover;
-              display: block;
-              filter: blur(5px);
-              -webkit-filter: blur(5px);
-              height: 800px;
-              left: 0;
-              position: fixed;
-              right: 0;
-              z-index: 1;
-            }
+  <style>
+    #drop_zone {
+      border: 2px dashed darkgray;
+      width:  450px;
+      height: 90px;
+    }
+    .slidingMessageViewFromTop {
+        position: fixed;
+        top: 15%;
+        left: 20%;
+        width: 700px;
+        height: 500px;
+        overflow: scroll;
+        background-color: #FFF; color: #000;
+        transition: all 1s;
+        z-index: 10;
+        font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+    }
+    .slidingMessageViewFromTop.close {
+        height: 0;
+    }
+  </style>
+</head>
 
-            .content {
-              background: rgba(255, 255, 255, 0.35);
-              border-radius: 3px;
-              box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-              font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-              top: 10px;
-              left: 0;
-              position: fixed;
-              margin-left: 20px;
-              margin-right: 20px;
-              right: 0;
-              z-index: 2;
-              padding: 0 10px;
-            }
-
-            .divScroll {
-                overflow:scroll;
-                height:600px;
-                width:90%;
-            }
-
-            #drop_zone {
-              border: 2px dashed darkgray;
-              width:  400px;
-              height: 90px;
-            }
-
-            .slidingMessageViewFromTop {
-                position: fixed;
-                top: 15%;
-                left: 20%;
-                width: 700px;
-                height: 500px;
-                overflow: scroll;
-                background-color: #FFF; color: #000;
-                transition: all 1s;
-                z-index: 10;
-                font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-                font-size: 13px;
-            }
-            .slidingMessageViewFromTop.close {
-                height: 0;
-            }
-        </style>
-
-        <script type="text/javascript" src="js/jquery.min.js"></script>
-        <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
-    </head>
 
 {{#if isX64}}
 <div class="slidingMessageViewFromTop close">
@@ -150,25 +114,6 @@ function toggleMessageViewFromTop() {
 }
 </script>
 {{/if}}
-
-<div class="background-image"></div>
-
-<div class="content">
-
-<div class="divScroll">
-
-<center>
-<p><button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'"></button></p>
-</center>
-
-<center>
-<div id="drop_zone">
-    <p>Optional: Drag and drop a message specification file (.odvd) here to be used instead of the OpenDLV Standard Message Set when creating the .csv export.</p>
-</div>
-{{#if hasODVD}}
-<button id="deleteExternallySuppliedODVDFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteExternallySuppliedODVDFile()" title="&nbsp;Remove provided message specification file.">Remove provided message specification file.</button>
-{{/if}}
-</center>
 
 <script>
     function handleDragOver(evt) {
@@ -284,44 +229,6 @@ function deleteExternallySuppliedODVDFile() {
     }
 }
 </script>
-
-<table cellpadding="2" width="100%" id="listOfRecordings">
-    <tr>
-        <th>
-        Actions
-        </th>
-        <th onclick="sortTable(1)" style="cursor: pointer;">
-        Name
-        </th>
-        <th>
-        Size
-        </th>
-    </tr>
-{{#each recfiles}}
-    <tr>
-        <td align="center">
-        <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
-        <button id="download-csv-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
-{{#if ../isX64}}
-        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
-        <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;.webm</button>
-{{else}}
-        <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#555;padding: 5px 20px;disabled" title="Converting {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file not supported on non-x86_64 platforms.">&nbsp;<strike>.csv/.png</strike></button>
-        <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;disabled" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;<strike>.webm</strike></button>
-{{/if}}
-        <button id="playFile" type="button" class="far fa-play-circle" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
-        <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
-        </td>
-        <td align="left">
-        <div onclick="location.href = '../details?rec={{name}}'" onmouseover="" style="cursor: pointer;">{{name}}</div>
-        </td>
-        <td align="right">
-        {{size}} bytes
-        </td>
-    </tr>
-{{/each}}
-</table>
-</div>
 
 <script>
 // Sorting table code: https://www.w3schools.com/howto/howto_js_sort_table.asp
@@ -575,9 +482,71 @@ function deleteFile(filename, name) {
 }
 </script>
 
-</div>
-</div>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <button id="back" type="button" class="fas fa-arrow-left" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="location.href='..'">
+  </nav>
 
+
+  <div class="container-fluid">
+    <center>
+    <div id="drop_zone">
+      <p>Optional: Drag and drop a message specification file (.odvd) here to be used instead of the OpenDLV Standard Message Set when creating the .csv export.</p>
+    </div>
+    {{#if hasODVD}}
+    <button id="deleteExternallySuppliedODVDFile" type="button" class="far fa-trash-alt" style="font-size:20px;color:#555;padding: 5px 30px;" onclick="deleteExternallySuppliedODVDFile()" title="&nbsp;Remove provided message specification file.">Remove provided message specification file.</button>
+    {{/if}}
+    </center>
+    <br>
+  </div>
+
+
+  <div class="container-fluid">
+    <center>
+      <table cellpadding="2" width="100%" id="listOfRecordings">
+          <tr>
+              <th style="text-align:center;">
+              Actions
+              </th>
+              <th onclick="sortTable(1)" style="cursor: pointer;text-align:center;">
+              Name
+              </th>
+              <th style="text-align:center;">
+              Size
+              </th>
+          </tr>
+      {{#each recfiles}}
+          <tr>
+              <td align="center">
+              <button id="download-rec" type="button" class="fas fa-file-download" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="location.href='{{filename}}'" title="Download {{name}}.">&nbsp;.rec</button>
+              <button id="download-csv-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFile('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv files using the OpenDLV Standard Message Set and download resulting .csv files as zip file.">&nbsp;.csv</button>
+      {{#if ../isX64}}
+              <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFilePNG('{{filename}}', '{{name}}')" title="Convert {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file.">&nbsp;.csv/.png</button>
+              <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;.webm</button>
+      {{else}}
+              <button id="download-csvpng-{{name}}" type="button" class="fas fa-file-archive" style="font-size:15px;color:#555;padding: 5px 20px;disabled" title="Converting {{name}} to separate .csv and .png files using the OpenDLV Standard Message Set and download resulting .csv and .png files as zip file not supported on non-x86_64 platforms.">&nbsp;<strike>.csv/.png</strike></button>
+              <button id="download-webm-{{name}}" type="button" class="fas fa-film" style="font-size:15px;color:#3498DB;padding: 5px 20px;disabled" onclick="convertFileWEBM('{{filename}}', '{{name}}')" title="Convert video frames from {{name}} to separate .webm files and download resulting .webm files as zip file.">&nbsp;<strike>.webm</strike></button>
+      {{/if}}
+              <button id="playFile" type="button" class="far fa-play-circle" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="replayFile('{{filename}}', '{{name}}')" title="Replay {{name}}."></button>
+              <button id="deleteFile" type="button" class="far fa-trash-alt" style="font-size:15px;color:#555;padding: 5px 20px;" onclick="deleteFile('{{filename}}', '{{name}}')" title="Delete {{name}}."></button>
+              </td>
+              <td align="left">
+              <div onclick="location.href = '../details?rec={{name}}'" onmouseover="" style="cursor: pointer;">{{name}}</div>
+              </td>
+              <td align="right">
+              {{size}} bytes
+              </td>
+          </tr>
+      {{/each}}
+      </table>
+    </center>
+  </div>
+
+
+  <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
+  <script type="text/javascript" src="js/popper.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/libcluon-0.0.107.js"></script>
 </body>
 </html>
 
