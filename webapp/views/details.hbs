@@ -6,9 +6,14 @@
 
   <title>OpenDLV Vehicle View - Details for '{{name}}'</title>
 
+  <link type="text/css" rel="stylesheet" href="css/maptalks.css"/>
   <link type="text/css" rel="stylesheet" href="css/all.css"/>
   <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
   <link type="text/css" rel="stylesheet" href="css/navbar-top-fixed.css"/>
+
+  <style>
+      #map { width: 640px; height: 480px; }
+  </style>
 </head>
 
 <script>
@@ -33,11 +38,9 @@ function deleteExternallySuppliedODVDFile() {
     }
 }
 
-{{#each attributes}}
-{{#if geojson}}
-//    var geojson = "{{value}}".replace("&#x3D;", "=");
-{{/if}}
-{{/each}}
+var g_geojson = window.atob("{{geojson}}".replace("&#x3D;", ""));
+var g_firstWGS84 = JSON.parse(window.atob("{{firstWGS84}}".replace("&#x3D;", "")));
+var g_lastWGS84 = JSON.parse(window.atob("{{lastWGS84}}".replace("&#x3D;", "")));
 </script>
 
 <script>
@@ -112,29 +115,23 @@ function exportSelectedMessages() {
         <li class="nav-item">
           <a class="nav-link" href="#panel-messages" data-toggle="tab">Messages</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#panel-map" data-toggle="tab">Map</a>
+        </li>
       </ul>
 
     <div class="tab-content">
       <div class="tab-pane active show" id="panel-overview">
+        <br>
         <center>
           <table cellpadding="2" width="60%">
-            {{#each attributes}}
+            {{#each fileInformation}}
             <tr>
               <td align="left">
-              {{#if messageID}}
-              {{else if opendlv_system_LogMessage}}
-              {{else if geojson}}
-              {{else}}
-                      {{key}}
-              {{/if}}
+              {{key}}
               </td>
               <td align="left">
-              {{#if messageID}}
-              {{else if opendlv_system_LogMessage}}
-              {{else if geojson}}
-              {{else}}
-                      {{value}}
-              {{/if}}
+              {{value}}
               </td>
             </tr>
             {{/each}}
@@ -144,21 +141,16 @@ function exportSelectedMessages() {
       </div>
 
       <div class="tab-pane" id="panel-comments">
+        <br>
         <center>
           <table cellpadding="2" width="60%">
-            {{#each attributes}}
+            {{#each comments}}
             <tr>
               <td align="left">
-              {{#if opendlv_system_LogMessage}}
-                <i class="far fa-comment"></i> {{key}}:
-              {{else}}
-              {{/if}}
+              <i class="far fa-comment"></i> {{key}}:
               </td>
               <td align="left">
-              {{#if opendlv_system_LogMessage}}
-                "{{value}}"
-              {{else}}
-              {{/if}}
+              "{{value}}"
               </td>
             </tr>
             {{/each}}
@@ -172,34 +164,119 @@ function exportSelectedMessages() {
         <br>
         <center>
           <table cellpadding="2" width="80%">
-            {{#each attributes}}
+            {{#each messages}}
             <tr>
               <td align="left">
                 {{#if selectable}}
                 <input type="checkbox" id="isSelected-{{key}}" name="isSelected-{{key}}" value="{{messageID}}/{{senderStamp}}" title="Include this message in export."/>
                 {{/if}}
-                {{#if messageID}}
-                  number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
-                {{else}}
-                {{/if}}
+                number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
               </td>
               <td align="right">
-              {{#if messageID}}
-                {{value}}
-              {{else}}
-              {{/if}}
+              {{value}}
               </td>
             </tr>
-          {{/each}}
+            {{/each}}
           </table>
         </center>
       </div>
+
+      <div class="tab-pane" id="panel-map">
+      <br>
+      <center><div id="map"></div></center>
+      </div>
     </div>
+
   </div>
 
+  <script type="text/javascript" src="js/maptalks.min.js"></script>
   <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
   <script type="text/javascript" src="js/popper.min.js"></script>
   <script type="text/javascript" src="js/bootstrap.min.js"></script>
+
+<script>
+  var g_map = new maptalks.Map('map', {
+    center : [-118.150127,33.779397],
+    zoom : 15,
+    centerCross: true,
+    baseLayer: new maptalks.TileLayer('base', {
+      urlTemplate: 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+      subdomains: ['a','b','c','d'],
+      attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+    }),
+    layers : [
+      new maptalks.VectorLayer('trace')
+    ]
+  });
+
+  if ( (g_firstWGS84 != null) && (g_lastWGS84 != null) ) {
+    var c = [g_firstWGS84.longitude, g_firstWGS84.latitude];
+    g_map.setCenter(c);
+
+    var startOfRecordingLocation = [g_firstWGS84.longitude, g_firstWGS84.latitude];
+    var endOfRecordingLocation = [g_lastWGS84.longitude, g_lastWGS84.latitude];
+    var gpsTrace = new maptalks.LineString(
+      [
+        startOfRecordingLocation,
+        {{#each gpsTrace}}
+          [{{longitude}}, {{latitude}}],
+        {{/each}}
+        endOfRecordingLocation
+      ],
+      {
+        symbol:{
+          'lineColor' : '#1bbc9b',
+          'lineWidth' : 1,
+          'lineDasharray' : [10, 10],
+          'markerPlacement' : 'vertex', //vertex, point, vertex-first, vertex-last, center
+          'markerVerticalAlignment' : 'middle',
+          'markerWidth'  : 30,
+          'markerHeight' : 30
+        }
+      }
+    ).addTo(g_map.getLayer('trace'));
+
+    // Start of recording.
+    {
+      var geoJSON = `{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": ` + JSON.stringify(startOfRecordingLocation) + `
+  },
+  "properties": {
+    "name": "Start of recording."
+  }
+  }
+`;
+      var marker = maptalks.GeoJSON.toGeometry(geoJSON).addTo(g_map.getLayer('trace'));
+      marker.setInfoWindow({
+        'content'   : 'Start of recording.',
+        'autoCloseOn' : 'click'
+      });
+    }
+    // End of recording.
+    {
+      var geoJSON = `{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": ` + JSON.stringify(endOfRecordingLocation) + `
+  },
+  "properties": {
+    "name": "End of recording."
+  }
+  }
+`;
+      var marker = maptalks.GeoJSON.toGeometry(geoJSON).addTo(g_map.getLayer('trace'));
+      marker.setInfoWindow({
+        'content'   : 'End of recording.',
+        'autoCloseOn' : 'click'
+      });
+    }
+  }
+</script>
+
 </body>
 </html>
 

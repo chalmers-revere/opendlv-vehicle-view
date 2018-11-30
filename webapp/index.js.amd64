@@ -170,7 +170,7 @@ app.get("/details", function(req, res) {
 
         var size = fs.statSync(path.join('./recordings/' + req.query.rec)).size;
         size = addThousandsSeparator(size);
-        details.attributes.push({
+        details.fileInformation.push({
             "key"       : "size:",
             "value"     : size + " bytes"
         });
