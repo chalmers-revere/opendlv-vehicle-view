@@ -22,9 +22,11 @@
 
 // Include the single-file, header-only cluon library.
 #include "cluon-complete.hpp"
+#include "WGS84toCartesian.hpp"
 #include "opendlv-standard-message-set.hpp"
 
 #include <ctime>
+#include <cmath>
 #include <iomanip>
 
 int32_t main(int32_t argc, char **argv) {
@@ -166,11 +168,19 @@ int32_t main(int32_t argc, char **argv) {
                     cluon::data::Envelope envFirst = envelopesWithOpendlvProxyGeodeticWgs84Reading.front();
                     opendlv::proxy::GeodeticWgs84Reading firstPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envFirst));
 
-                    cluon::data::Envelope envLast = envelopesWithOpendlvProxyGeodeticWgs84Reading.back();
-                    opendlv::proxy::GeodeticWgs84Reading lastPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envLast));
-
-                    std::cout << "{ \"key\": \"WGS84\", \"value\": {" << "\"latitude\":" << std::setprecision(10) << firstPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << firstPos.longitude() << std::setprecision(6)<< "} }" << std::endl;
-                    std::cout << ",{ \"key\": \"WGS84\", \"value\": {" << "\"latitude\":" << std::setprecision(10) << lastPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << lastPos.longitude() << std::setprecision(6)<< "} }" << std::endl;
+                    uint32_t counter{0};
+                    std::array<double, 2> reference{firstPos.latitude(), firstPos.longitude()};
+                    for (auto env : envelopesWithOpendlvProxyGeodeticWgs84Reading) {
+                        opendlv::proxy::GeodeticWgs84Reading nextWGS84 = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(env));
+                        std::array<double, 2> nextPos{nextWGS84.latitude(), nextWGS84.longitude()};
+                        std::array<double, 2> result{wgs84::toCartesian(reference, nextPos)};
+                        double d = std::sqrt(result[0]*result[0] + result[1]*result[1]);
+                        if (d > 5) {
+                            reference = nextPos;
+                            std::cout << ((counter > 0)? "," : "") << "{" << "\"latitude\":" << std::setprecision(10) << nextPos[0] << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << nextPos[1] << std::setprecision(6)<< "}" << std::endl;
+                            counter++;
+                        }
+                    }
                 }
             }
             std::cout << " ] ," << std::endl

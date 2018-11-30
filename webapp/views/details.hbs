@@ -38,9 +38,9 @@ function deleteExternallySuppliedODVDFile() {
     }
 }
 
-var g_geojson = window.atob("{{geojson}}");
-var g_firstWGS84 = JSON.parse(window.atob("{{firstWGS84}}"));
-var g_lastWGS84 = JSON.parse(window.atob("{{lastWGS84}}"));
+var g_geojson = window.atob("{{geojson}}".replace("&#x3D;", ""));
+var g_firstWGS84 = JSON.parse(window.atob("{{firstWGS84}}".replace("&#x3D;", "")));
+var g_lastWGS84 = JSON.parse(window.atob("{{lastWGS84}}".replace("&#x3D;", "")));
 </script>
 
 <script>
@@ -176,7 +176,7 @@ function exportSelectedMessages() {
               {{value}}
               </td>
             </tr>
-          {{/each}}
+            {{/each}}
           </table>
         </center>
       </div>
@@ -213,9 +213,30 @@ function exportSelectedMessages() {
     var c = [g_firstWGS84.longitude, g_firstWGS84.latitude];
     g_map.setCenter(c);
 
-    // Start of recording.
     var startOfRecordingLocation = [g_firstWGS84.longitude, g_firstWGS84.latitude];
     var endOfRecordingLocation = [g_lastWGS84.longitude, g_lastWGS84.latitude];
+    var gpsTrace = new maptalks.LineString(
+      [
+        startOfRecordingLocation,
+        {{#each gpsTrace}}
+          [{{longitude}}, {{latitude}}],
+        {{/each}}
+        endOfRecordingLocation
+      ],
+      {
+        symbol:{
+          'lineColor' : '#1bbc9b',
+          'lineWidth' : 1,
+          'lineDasharray' : [10, 10],
+          'markerPlacement' : 'vertex', //vertex, point, vertex-first, vertex-last, center
+          'markerVerticalAlignment' : 'middle',
+          'markerWidth'  : 30,
+          'markerHeight' : 30
+        }
+      }
+    ).addTo(g_map.getLayer('trace'));
+
+    // Start of recording.
     {
       var geoJSON = `{
   "type": "Feature",
@@ -253,24 +274,6 @@ function exportSelectedMessages() {
         'autoCloseOn' : 'click'
       });
     }
-
-    var gpsTrace = new maptalks.LineString(
-      [
-        startOfRecordingLocation,
-        endOfRecordingLocation
-      ],
-      {
-        symbol:{
-          'lineColor' : '#1bbc9b',
-          'lineWidth' : 1,
-          'lineDasharray' : [10, 10],
-          'markerPlacement' : 'vertex', //vertex, point, vertex-first, vertex-last, center
-          'markerVerticalAlignment' : 'middle',
-          'markerWidth'  : 30,
-          'markerHeight' : 30
-        }
-      }
-    ).addTo(g_map.getLayer('trace'));
   }
 </script>
 
