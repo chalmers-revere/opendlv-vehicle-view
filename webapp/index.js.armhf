@@ -38,6 +38,8 @@ var g_config = { g_vehicle: OPENDLV_VEHICLE_VIEW_PLATFORM,
                  platformIsRhino: PLATFORM_IS_RHINO,
                  platformIsKiwi: PLATFORM_IS_KIWI,
                  enableKiwiSimulation: ENABLE_KIWI_SIMULATION };
+var g_myVersion = "";
+var g_myRemoteVersion = "";
 
 ////////////////////////////////////////////////////////////////////////////////
 var g_fileToReplay = "";
@@ -90,8 +92,20 @@ app.set('view engine', '.hbs');
 // Default landing page.
 app.get("/", function(req, res) {
     var hasExternallySuppliedODVDFile = fs.existsSync("./external.odvd");
+    var hasRemoteUpdate = false;
+    if ( (g_myRemoteVersion == null) || (g_myRemoteVersion.length == 0) || (g_myVersion == null) || (g_myVersion.length == 0) || ((g_myRemoteVersion.length > 0) && (g_myRemoteVersion.charAt(0) != 'v')) || (g_myVersion == g_myRemoteVersion)) {
+        g_myRemoteVersion = "";
+    }
+    else {
+        hasRemoteUpdate = true;
+    }
+    var remoteUpdateGitHub = "https://github.com/chalmers-revere/opendlv-vehicle-view/releases/tag/" + g_myRemoteVersion;
     var conf = { livePage: true,
-                 useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile };
+                 useExternallySuppliedODVDFile: hasExternallySuppliedODVDFile,
+                 myVersion: g_myVersion,
+                 hasRemoteUpdate : hasRemoteUpdate,
+                 myRemoteVersion: g_myRemoteVersion,
+                 remoteUpdateGitHub: remoteUpdateGitHub };
     conf = Object.assign(conf, g_config);
     res.render('main', conf);
 });
@@ -294,7 +308,25 @@ app.get(/^(.+)$/, function(req, res){
 //------------------------------------------------------------------------------
 // Start server.
 var server = app.listen(PORT, function () {
-    console.log('[opendlv-vehicle-view] Web server listening on port: ' + PORT + ', joining live OD4Session ' + LIVE_OD4SESSION_CID + ', using OD4Session ' + PLAYBACK_OD4SESSION_CID + ' for playback.');
+    {
+        try {
+            g_myVersion = execSync('docker inspect `cat /proc/self/cgroup | head -1 | cut -d ":" -f 3 | cut -d "/" -f 3` | grep "Image" | grep -v "sha256" | cut -d "\\"" -f 4 | cut -f2 -d":"', { shell: '/bin/bash' }).toString();
+        }
+        catch (e) {}
+        g_myVersion.trim();
+        g_myVersion = g_myVersion.slice(0, -1);
+    }
+
+    {
+        try {
+            g_myRemoteVersion = execSync("curl -sL https://hub.docker.com/r/chalmersrevere/opendlv-vehicle-view-multi/tags/ |sed  -e 's|}|\\n|g' -e 's|{|\\n|g'|grep '\"result\"'|sed -e 's|,|\\n|g'|cut -d '[' -f2|cut -d ']' -f1|sed  '/\"tags\":/d'|sed -e 's|\"||g'|head -1", { shell: '/bin/bash' }).toString();
+        }
+        catch (e) {}
+        g_myRemoteVersion.trim();
+        g_myRemoteVersion = g_myRemoteVersion.slice(0, -1);
+    }
+
+    console.log('[opendlv-vehicle-view (' + g_myVersion + ')] Web server listening on port: ' + PORT + ', joining live OD4Session ' + LIVE_OD4SESSION_CID + ', using OD4Session ' + PLAYBACK_OD4SESSION_CID + ' for playback.');
 
     try {
         // Remove potentially existing external ODVD file.

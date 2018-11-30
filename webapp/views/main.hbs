@@ -155,7 +155,10 @@
                 <div class="col-md-12">
                     <br>
                     <center>
-                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - v0.0.48"></i>
+                    <i id="connectionStatusSymbol" class="fa fa-taxi" style="font-size:30px;color:#555" title="OpenDLV Vehicle View - {{myVersion}}"></i>
+{{#if hasRemoteUpdate}}
+<i id="updateAvailable" class="fas fa-angle-double-up" style="font-size:30px;color:#ff9933" title="Update to {{myRemoteVersion}} available." onClick="window.open('{{remoteUpdateGitHub}}');"></i>
+{{/if}}
                     <div id="connectionStatusText">OpenDLV Vehicle View (disconnected)</div>
 {{#if playbackPage}}
                     <div id="filenameCurrentlyReplaying">Filename</div>
