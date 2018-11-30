@@ -38,11 +38,9 @@ function deleteExternallySuppliedODVDFile() {
     }
 }
 
-{{#each gpsTrace}}
-{{#if geojson}}
-var g_geojson = window.atob("{{value}}".replace("&#x3D;", "="));
-{{/if}}
-{{/each}}
+var g_geojson = window.atob("{{geojson}}");
+var g_firstWGS84 = JSON.parse(window.atob("{{firstWGS84}}"));
+var g_lastWGS84 = JSON.parse(window.atob("{{lastWGS84}}"));
 </script>
 
 <script>
@@ -198,57 +196,82 @@ function exportSelectedMessages() {
 
 <script>
   var g_map = new maptalks.Map('map', {
-    center: [12.0,57.68],
-    zoom: 14,
+    center : [-118.150127,33.779397],
+    zoom : 15,
+    centerCross: true,
     baseLayer: new maptalks.TileLayer('base', {
       urlTemplate: 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
       subdomains: ['a','b','c','d'],
       attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
     }),
     layers : [
-      new maptalks.VectorLayer('v')
+      new maptalks.VectorLayer('trace')
     ]
   });
 
-  var marker = maptalks.GeoJSON.toGeometry(g_geojson).addTo(g_map.getLayer('v'));
-  marker.setInfoWindow({
-    'content'   : 'Click on marker to open.',
-    'autoCloseOn' : 'click'
-  });
-/*
-var list = `[{
-		"type": "Feature1",
-		"geometry": {
-			"type": "Point",
-			"coordinates": [12.0, 57.7]
-		},
-		"properties": {
-			"name": "Dinagat Islands"
-		}
-	},
-	{
-		"type": "Feature2",
-		"geometry": {
-			"type": "Point",
-			"coordinates": [12.0, 57.71]
-		},
-		"properties": {
-			"name": "Dinagat Islands 2"
-		}
-	}
-]
+  if ( (g_firstWGS84 != null) && (g_lastWGS84 != null) ) {
+    var c = [g_firstWGS84.longitude, g_firstWGS84.latitude];
+    g_map.setCenter(c);
+
+    // Start of recording.
+    var startOfRecordingLocation = [g_firstWGS84.longitude, g_firstWGS84.latitude];
+    var endOfRecordingLocation = [g_lastWGS84.longitude, g_lastWGS84.latitude];
+    {
+      var geoJSON = `{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": ` + JSON.stringify(startOfRecordingLocation) + `
+  },
+  "properties": {
+    "name": "Start of recording."
+  }
+  }
 `;
-var jlist = JSON.parse(list);
-for (var key in jlist)
-{
-   if (jlist.hasOwnProperty(key))
-   {
-      // here you have access to
-      console.log(jlist[key].type);
-   }
-}
-console.log(list);
-*/
+      var marker = maptalks.GeoJSON.toGeometry(geoJSON).addTo(g_map.getLayer('trace'));
+      marker.setInfoWindow({
+        'content'   : 'Start of recording.',
+        'autoCloseOn' : 'click'
+      });
+    }
+    // End of recording.
+    {
+      var geoJSON = `{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": ` + JSON.stringify(endOfRecordingLocation) + `
+  },
+  "properties": {
+    "name": "End of recording."
+  }
+  }
+`;
+      var marker = maptalks.GeoJSON.toGeometry(geoJSON).addTo(g_map.getLayer('trace'));
+      marker.setInfoWindow({
+        'content'   : 'End of recording.',
+        'autoCloseOn' : 'click'
+      });
+    }
+
+    var gpsTrace = new maptalks.LineString(
+      [
+        startOfRecordingLocation,
+        endOfRecordingLocation
+      ],
+      {
+        symbol:{
+          'lineColor' : '#1bbc9b',
+          'lineWidth' : 1,
+          'lineDasharray' : [10, 10],
+          'markerPlacement' : 'vertex', //vertex, point, vertex-first, vertex-last, center
+          'markerVerticalAlignment' : 'middle',
+          'markerWidth'  : 30,
+          'markerHeight' : 30
+        }
+      }
+    ).addTo(g_map.getLayer('trace'));
+  }
 </script>
 
 </body>

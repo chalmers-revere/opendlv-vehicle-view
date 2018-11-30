@@ -25,6 +25,7 @@
 #include "opendlv-standard-message-set.hpp"
 
 #include <ctime>
+#include <iomanip>
 
 int32_t main(int32_t argc, char **argv) {
     int32_t retCode{0};
@@ -66,6 +67,7 @@ int32_t main(int32_t argc, char **argv) {
 
             std::map<std::string, uint32_t> numberOfMessagesPerType{};
             std::vector<cluon::data::Envelope> envelopesWithOpendlvSystemLogMessage{};
+            std::vector<cluon::data::Envelope> envelopesWithOpendlvProxyGeodeticWgs84Reading{};
 
             bool timeStampFromFirstEnvelopeSet{false};
             cluon::data::TimeStamp timeStampFromFirstEnvelope;
@@ -92,6 +94,11 @@ int32_t main(int32_t argc, char **argv) {
                     if ( (env.dataType() == opendlv::system::LogMessage::ID()) &&
                          (env.senderStamp() == 999) ) {
                         envelopesWithOpendlvSystemLogMessage.push_back(env);
+                    }
+                    // Store opendlv.proxy.GeodeticWgs84Reading.
+                    if ( (env.dataType() == opendlv::proxy::GeodeticWgs84Reading::ID()) &&
+                         (env.senderStamp() == 0) ) {
+                        envelopesWithOpendlvProxyGeodeticWgs84Reading.push_back(env);
                     }
 
                 }
@@ -153,13 +160,49 @@ int32_t main(int32_t argc, char **argv) {
             }
             std::cout << " ] ," << std::endl
                       << " \"gpsTrace\": [ " << std::endl;
-            std::cout << "{ \"key\": \"geojson\", \"value\":\"ewogICJ0eXBlIjogIkZlYXR1cmUiLAogICJnZW9tZXRyeSI6IHsKICAgICJ0eXBlIjogIlBvaW50IiwKICAgICJjb29yZGluYXRlcyI6IFsxMi4wLCA1Ny43XQogIH0sCiAgInByb3BlcnRpZXMiOiB7CiAgICAibmFtZSI6ICJEaW5hZ2F0IElzbGFuZHMiCiAgfQp9\", \"geojson\":true}" << std::endl;
+            // Export opendlv.proxy.GeodeticWgs84Reading.
+            {
+                if (envelopesWithOpendlvProxyGeodeticWgs84Reading.size() >= 2) {
+                    cluon::data::Envelope envFirst = envelopesWithOpendlvProxyGeodeticWgs84Reading.front();
+                    opendlv::proxy::GeodeticWgs84Reading firstPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envFirst));
+
+                    cluon::data::Envelope envLast = envelopesWithOpendlvProxyGeodeticWgs84Reading.back();
+                    opendlv::proxy::GeodeticWgs84Reading lastPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envLast));
+
+                    std::cout << "{ \"key\": \"WGS84\", \"value\": {" << "\"latitude\":" << std::setprecision(10) << firstPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << firstPos.longitude() << std::setprecision(6)<< "} }" << std::endl;
+                    std::cout << ",{ \"key\": \"WGS84\", \"value\": {" << "\"latitude\":" << std::setprecision(10) << lastPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << lastPos.longitude() << std::setprecision(6)<< "} }" << std::endl;
+                }
+            }
             std::cout << " ] ," << std::endl
                       << " \"fileInformation\": [ " << std::endl
                       << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}" << std::endl
                       << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}" << std::endl
                       << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}" << std::endl;
-            std::cout << " ] }" << std::endl;
+            std::cout << " ]," << std::endl;
+            std::cout << "\"geojson\":\"ewogICJ0eXBlIjogIkZlYXR1cmUiLAogICJnZW9tZXRyeSI6IHsKICAgICJ0eXBlIjogIlBvaW50IiwKICAgICJjb29yZGluYXRlcyI6IFsxMi4wLCA1Ny43XQogIH0sCiAgInByb3BlcnRpZXMiOiB7CiAgICAibmFtZSI6ICJEaW5hZ2F0IElzbGFuZHMiCiAgfQp9\""<< std::endl;
+            {
+                if (envelopesWithOpendlvProxyGeodeticWgs84Reading.size() >= 2) {
+                    cluon::data::Envelope envFirst = envelopesWithOpendlvProxyGeodeticWgs84Reading.front();
+                    opendlv::proxy::GeodeticWgs84Reading firstPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envFirst));
+
+                    cluon::data::Envelope envLast = envelopesWithOpendlvProxyGeodeticWgs84Reading.back();
+                    opendlv::proxy::GeodeticWgs84Reading lastPos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(envLast));
+
+                    {
+                        std::stringstream tmp;
+                        tmp << "{" << "\"latitude\":" << std::setprecision(10) << firstPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << firstPos.longitude() << std::setprecision(6)<< "}";
+                        const std::string out = cluon::ToJSONVisitor::encodeBase64(tmp.str());
+                        std::cout << ",\"firstWGS84\": \"" << out << "\"" << std::endl;
+                    }
+                    {
+                        std::stringstream tmp;
+                        tmp << "{" << "\"latitude\":" << std::setprecision(10) << lastPos.latitude() << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << lastPos.longitude() << std::setprecision(6)<< "}";
+                        const std::string out = cluon::ToJSONVisitor::encodeBase64(tmp.str());
+                        std::cout << ",\"lastWGS84\": \"" << out << "\"" << std::endl;
+                    }
+                }
+            }
+            std::cout << "}" << std::endl;
         }
         else {
             std::cerr << argv[0] << ": Recording '" << commandlineArguments["rec"] << "' not found." << std::endl;
