@@ -38,7 +38,7 @@ function deleteExternallySuppliedODVDFile() {
     }
 }
 
-{{#each attributes}}
+{{#each gpsTrace}}
 {{#if geojson}}
 var g_geojson = window.atob("{{value}}".replace("&#x3D;", "="));
 {{/if}}
@@ -124,25 +124,16 @@ function exportSelectedMessages() {
 
     <div class="tab-content">
       <div class="tab-pane active show" id="panel-overview">
+        <br>
         <center>
           <table cellpadding="2" width="60%">
-            {{#each attributes}}
+            {{#each fileInformation}}
             <tr>
               <td align="left">
-              {{#if messageID}}
-              {{else if opendlv_system_LogMessage}}
-              {{else if geojson}}
-              {{else}}
-                      {{key}}
-              {{/if}}
+              {{key}}
               </td>
               <td align="left">
-              {{#if messageID}}
-              {{else if opendlv_system_LogMessage}}
-              {{else if geojson}}
-              {{else}}
-                      {{value}}
-              {{/if}}
+              {{value}}
               </td>
             </tr>
             {{/each}}
@@ -152,21 +143,16 @@ function exportSelectedMessages() {
       </div>
 
       <div class="tab-pane" id="panel-comments">
+        <br>
         <center>
           <table cellpadding="2" width="60%">
-            {{#each attributes}}
+            {{#each comments}}
             <tr>
               <td align="left">
-              {{#if opendlv_system_LogMessage}}
-                <i class="far fa-comment"></i> {{key}}:
-              {{else}}
-              {{/if}}
+              <i class="far fa-comment"></i> {{key}}:
               </td>
               <td align="left">
-              {{#if opendlv_system_LogMessage}}
-                "{{value}}"
-              {{else}}
-              {{/if}}
+              "{{value}}"
               </td>
             </tr>
             {{/each}}
@@ -180,22 +166,16 @@ function exportSelectedMessages() {
         <br>
         <center>
           <table cellpadding="2" width="80%">
-            {{#each attributes}}
+            {{#each messages}}
             <tr>
               <td align="left">
                 {{#if selectable}}
                 <input type="checkbox" id="isSelected-{{key}}" name="isSelected-{{key}}" value="{{messageID}}/{{senderStamp}}" title="Include this message in export."/>
                 {{/if}}
-                {{#if messageID}}
-                  number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
-                {{else}}
-                {{/if}}
+                number of '{{key}}' (message ID = {{messageID}}, sender stamp = {{senderStamp}}):
               </td>
               <td align="right">
-              {{#if messageID}}
-                {{value}}
-              {{else}}
-              {{/if}}
+              {{value}}
               </td>
             </tr>
           {{/each}}

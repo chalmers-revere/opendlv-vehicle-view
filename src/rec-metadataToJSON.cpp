@@ -109,12 +109,10 @@ int32_t main(int32_t argc, char **argv) {
             std::string strLastSampleTime(dateTimeBuffer);
             strLastSampleTime = strLastSampleTime.substr(0, strLastSampleTime.size()-1);
             strLastSampleTime = stringtoolbox::trim(strLastSampleTime);
-            std::cout << "{ \"attributes\": [ "
-                      << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}" << std::endl
-                      << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}" << std::endl
-                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}" << std::endl;
+            std::cout << "{ \"messages\": [ " << std::endl;
             // List message counters per type/sender-stamp.
             {
+              uint32_t counter{0};
               for (auto e : numberOfMessagesPerType) {
                   int32_t messageID{0};
                   {
@@ -128,11 +126,15 @@ int32_t main(int32_t argc, char **argv) {
                       std::stringstream sstr(tmp);
                       sstr >> senderStamp;
                   }
-                  std::cout << ",{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << senderStamp << "}" << std::endl;
+                  std::cout << ((counter > 0) ? "," : "") << "{ \"key\": \"" << (scope.count(messageID) > 0 ? scope[messageID].messageName() : "unknown message") << "\", \"value\":\"" << e.second << "\", \"selectable\":true, \"messageID\":" << messageID << ", \"senderStamp\":" << senderStamp << "}" << std::endl;
+                  counter++;
               }
             }
+            std::cout << " ] ," << std::endl
+                      << " \"comments\": [ " << std::endl;
             // Export opendlv.system.LogMessage.
             {
+                uint32_t counter{0};
                 for (auto e : envelopesWithOpendlvSystemLogMessage) {
                     if ( (e.dataType() == opendlv::system::LogMessage::ID()) &&
                          (e.senderStamp() == 999) ) {
@@ -144,12 +146,19 @@ int32_t main(int32_t argc, char **argv) {
 
                         opendlv::system::LogMessage logMessage = cluon::extractMessage<opendlv::system::LogMessage>(std::move(e));
 
-                        std::cout << ",{ \"key\": \"" << strLogMessageSampleTime << "\", \"value\":\"" << logMessage.description() << "\", \"opendlv_system_LogMessage\":true}" << std::endl;
+                        std::cout << ((counter > 0)? "," : "") << "{ \"key\": \"" << strLogMessageSampleTime << "\", \"value\":\"" << logMessage.description() << "\", \"opendlv_system_LogMessage\":true}" << std::endl;
+                        counter++;
                     }
                 }
             }
-            std::cout << ",{ \"key\": \"geojson\", \"value\":\"ewogICJ0eXBlIjogIkZlYXR1cmUiLAogICJnZW9tZXRyeSI6IHsKICAgICJ0eXBlIjogIlBvaW50IiwKICAgICJjb29yZGluYXRlcyI6IFsxMi4wLCA1Ny43XQogIH0sCiAgInByb3BlcnRpZXMiOiB7CiAgICAibmFtZSI6ICJEaW5hZ2F0IElzbGFuZHMiCiAgfQp9\", \"geojson\":true}" << std::endl;
-
+            std::cout << " ] ," << std::endl
+                      << " \"gpsTrace\": [ " << std::endl;
+            std::cout << "{ \"key\": \"geojson\", \"value\":\"ewogICJ0eXBlIjogIkZlYXR1cmUiLAogICJnZW9tZXRyeSI6IHsKICAgICJ0eXBlIjogIlBvaW50IiwKICAgICJjb29yZGluYXRlcyI6IFsxMi4wLCA1Ny43XQogIH0sCiAgInByb3BlcnRpZXMiOiB7CiAgICAibmFtZSI6ICJEaW5hZ2F0IElzbGFuZHMiCiAgfQp9\", \"geojson\":true}" << std::endl;
+            std::cout << " ] ," << std::endl
+                      << " \"fileInformation\": [ " << std::endl
+                      << "{ \"key\": \"number of messages:\", \"value\":\"" << numberOfEnvelopes << "\"}" << std::endl
+                      << ",{ \"key\": \"start of recording:\", \"value\":\"" << strFirstSampleTime << "\"}" << std::endl
+                      << ",{ \"key\": \"end of recording:\", \"value\":\"" << strLastSampleTime << "\"}" << std::endl;
             std::cout << " ] }" << std::endl;
         }
         else {
