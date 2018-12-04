@@ -275,6 +275,26 @@ function exportSelectedMessages() {
       });
     }
   }
+
+  {{#each gpsCommentsTrace}}
+    var geoJSON = `{
+"type": "Feature",
+"geometry": {
+  "type": "Point",
+  "coordinates": [{{position.longitude}},{{position.latitude}}]
+},
+"properties": {
+  "name": "{{comment}}"
+}
+}
+`;
+    var marker = maptalks.GeoJSON.toGeometry(geoJSON).addTo(g_map.getLayer('trace'));
+    marker.setInfoWindow({
+      'title': '{{timestamp}}',
+      'content' : '{{comment}}',
+      'autoCloseOn' : 'click'
+    });
+  {{/each}}
 </script>
 
 </body>

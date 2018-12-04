@@ -161,6 +161,49 @@ int32_t main(int32_t argc, char **argv) {
                 }
             }
             std::cout << " ] ," << std::endl
+                      << " \"gpsCommentsTrace\": [ " << std::endl;
+            // Export opendlv.system.LogMessage with associated GPS coordinates.
+            {
+                if (!envelopesWithOpendlvProxyGeodeticWgs84Reading.empty()) {
+                    uint32_t counter{0};
+                    std::vector<cluon::data::Envelope>::iterator closestGPS;
+                    std::array<double, 2> position = {0, 0};
+
+                    for (auto e : envelopesWithOpendlvSystemLogMessage) {
+                        if ( (e.dataType() == opendlv::system::LogMessage::ID()) &&
+                             (e.senderStamp() == 999) ) {
+                            if (!envelopesWithOpendlvProxyGeodeticWgs84Reading.empty()) {
+                                if (0 == counter) {
+                                    closestGPS = envelopesWithOpendlvProxyGeodeticWgs84Reading.begin();
+                                }
+                                while (closestGPS != envelopesWithOpendlvProxyGeodeticWgs84Reading.end()) {
+                                    auto delta = cluon::time::deltaInMicroseconds(e.sampleTimeStamp(), (*closestGPS).sampleTimeStamp());
+                                    if ( (delta > 0) && (delta < static_cast<int64_t>(250*1000)) ) {
+                                        cluon::data::Envelope env = *closestGPS;
+                                        opendlv::proxy::GeodeticWgs84Reading pos = cluon::extractMessage<opendlv::proxy::GeodeticWgs84Reading>(std::move(env));
+                                        position[0] = pos.latitude();
+                                        position[1] = pos.longitude();
+                                        break;
+                                    }
+
+                                    closestGPS++;
+                                }
+                            }
+                            time_t logMessageSampleTime = e.sampleTimeStamp().seconds();
+                            ::ctime_r(&logMessageSampleTime, dateTimeBuffer);
+                            std::string strLogMessageSampleTime(dateTimeBuffer);
+                            strLogMessageSampleTime = strLogMessageSampleTime.substr(0, strLogMessageSampleTime.size()-1);
+                            strLogMessageSampleTime = stringtoolbox::trim(strLogMessageSampleTime);
+
+                            opendlv::system::LogMessage logMessage = cluon::extractMessage<opendlv::system::LogMessage>(std::move(e));
+
+                            std::cout << ((counter > 0)? "," : "") << "{ \"timestamp\": \"" << strLogMessageSampleTime << "\", \"comment\":\"" << logMessage.description() << "\", \"position\":{" << "\"latitude\":" << std::setprecision(10) << position[0] << std::setprecision(6) << ",\"longitude\":" << std::setprecision(10) << position[1] << std::setprecision(6)<< "} }" << std::endl;
+                            counter++;
+                        }
+                    }
+                }
+            }
+            std::cout << " ] ," << std::endl
                       << " \"gpsTrace\": [ " << std::endl;
             // Export opendlv.proxy.GeodeticWgs84Reading.
             {
