@@ -401,6 +401,10 @@ g_ws.on('connection', function connection(conn) {
                         g_liveOD4Session.send(envGroundSteeringRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
                         g_liveOD4Session.send(envActuationRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
                     }
+                    if ('virtualjoystickCalibration' == key) {
+                        var envCalibrationSteeringRequest = Buffer.from(data.virtualjoystickCalibration.calibrationSteeringRequest, 'base64');
+                        g_liveOD4Session.send(envCalibrationSteeringRequest, 12175, '225.0.0.' + LIVE_OD4SESSION_CID);
+                    }
                 });
             }
         }

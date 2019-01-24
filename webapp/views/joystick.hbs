@@ -143,6 +143,14 @@
         </tr>
         <tr>
             <td>
+            Requested calibration steering:
+            </td>
+            <td>
+            <span id="steeringOffset"></span>
+            </td>
+        </tr>
+        <tr>
+            <td>
             Minimum steering:
             </td>
             <td>
@@ -171,6 +179,21 @@
             </td>
             <td>
             <input id="maxDeceleration" name="maxDeceleration" type="number" min=0 max=100 value=100 />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            Calibration:
+            </td>
+            <td>
+            <input id="enableCalibrationSteering" name="enableCalibrationSteering" type="checkbox" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>
+            <input id="calibrationSteering" name="calibrationSteering" type="range" min=-0.4 max=0.4 step=0.001 value=0.000 />
             </td>
         </tr>
         </table>
@@ -324,11 +347,13 @@ message opendlv.proxy.ActuationRequest [id = 160] {
     setInterval(function(){
         var envPedalPositionRequest;
         var envGroundSteeringRequest;
+        var envCalibrationSteeringRequest;
         var envActuationRequest;
 
         // Support for PedalPositionRequest & GroundSteeringRequest.
         {
             var pedalPosition = Math.floor(((-1 * joystick.deltaY())/100.0)*100.0)/100.0;
+
 
             var gasPedalPosition = Math.floor(((pedalPosition > 0) ? (pedalPosition*Number(document.getElementById("maxAcceleration").value)) : 0))/100.0;
             var brakePedalPosition = Math.floor(((pedalPosition < 0) ? (pedalPosition*Number(document.getElementById("maxDeceleration").value)) : 0))/100.0;
@@ -336,7 +361,10 @@ message opendlv.proxy.ActuationRequest [id = 160] {
             var pedalPositionRequest = "{\"position\":" + (gasPedalPosition > 0 ? gasPedalPosition : brakePedalPosition) + "}";
             envPedalPositionRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(pedalPositionRequest, 1086 /* message identifier */, 0 /* sender stamp */);
 
-
+            var offsetSteering = Number(document.getElementById("calibrationSteering").value);
+            var groundOffsetSteeringRequest = "{\"groundSteering\":" + offsetSteering + "}";
+            envCalibrationSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundOffsetSteeringRequest, 1090 /* message identifier */, 9999 /* sender stamp */);
+            
             var steering = Math.floor((-1 * (joystick.deltaX()/100.0) * Number(document.getElementById("maxSteering").value) * Math.PI / 180.0)*100.0)/100.0;
             var groundSteeringRequest = "{\"groundSteering\":" + steering + "}";
             envGroundSteeringRequest = __libcluon.encodeEnvelopeFromJSONWithSampleTimeStamp(groundSteeringRequest, 1090 /* message identifier */, 0 /* sender stamp */);
@@ -380,6 +408,18 @@ message opendlv.proxy.ActuationRequest [id = 160] {
 //            ws.send(strToAB(output), { binary: true });
         }
 
+        if (document.getElementById("enableCalibrationSteering").checked) {
+          var calibrationCommands = "{\"virtualjoystickCalibration\":" +
+                                      "{" +
+                                          "\"calibrationSteeringRequest\":" + "\"" + window.btoa(envCalibrationSteeringRequest) + "\"" +
+                                      "}" +
+                                    "}";
+          if (document.getElementById("enableSending").checked) {
+            ws.send(calibrationCommands);
+          }
+        }
+
+
         var actuationCommands = "{\"virtualjoystick\":" +
                                     "{" +
                                         "\"pedalPositionRequest\":" + "\"" + window.btoa(envPedalPositionRequest) + "\"," +
@@ -400,6 +440,10 @@ message opendlv.proxy.ActuationRequest [id = 160] {
 
         var decelerationLabel = document.getElementById('deceleration');
         decelerationLabel.innerHTML = brakePedalPosition;
+
+        var steeringOffsetLabel = document.getElementById('steeringOffset');
+        steeringOffsetLabel.innerHTML = offsetSteering;
+
     }, 1/25 /* 25Hz */ * 1000);
 </script>
 </body>
