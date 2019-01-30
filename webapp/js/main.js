@@ -23,6 +23,7 @@ var g_userIsSteppingForward = false;
 var g_envelopeCounter = 0;
 var g_mapOfMessages = {};
 var g_sendFromCode = false;
+var g_senderStampForImageReadingToShow = 0;
 
 // GPS map.
 var g_map;
@@ -193,6 +194,7 @@ function processEnvelope(incomingData) {
             for (var k in g_mapOfMessages) {
                 var messageName = Object.keys(g_mapOfMessages[k].envelope)[5];
                 var senderStamp = g_mapOfMessages[k].envelope.senderStamp;
+                var msg = g_mapOfMessages[k].envelope[Object.keys(g_mapOfMessages[k].envelope)[5]];
 
                 const key = messageName + "." + senderStamp;
                 if (!(key in g_mapOfDataForGnuplot)) {
@@ -201,14 +203,22 @@ function processEnvelope(incomingData) {
 
                 var $row = $('<tr id="' + key + '">').appendTo($tableMessagesDetails);
                 // Add action(s).
-                $('<td>').html('<button id="btn-' + key + '" type="button" class="fas fa-chart-bar" style="font-size:20px;color:#555;padding: 5px 30px;" title="Plot numerical signals." onclick=\'plotSignals("'+ key + '")\'></button>').appendTo($row);
+                if ( (1055 == g_mapOfMessages[k].envelope.dataType) &&
+                     ("h264" == window.atob(msg["fourcc"])) &&
+                     (640 == msg["width"]) &&
+                     (480 == msg["height"]) ) {
+                    // ImageReading dimensions allow for selection of thumbnail.
+                    $('<td>').html('<button id="btn-' + key + '" type="button" class="fas fa-chart-bar" style="font-size:20px;color:#555;padding: 5px 30px;" title="Plot numerical signals." onclick=\'plotSignals("'+ key + '")\'></button><br><button id="btn-show-' + key + '" type="button" class="fas fa-film" style="font-size:20px;color:#555;padding: 5px 30px;" title="Select this stream for overview tab." onclick=\'selectVideoStream("'+ g_mapOfMessages[k].envelope.senderStamp + '")\'></button>').appendTo($row);
+                }
+                else {
+                    $('<td>').html('<button id="btn-' + key + '" type="button" class="fas fa-chart-bar" style="font-size:20px;color:#555;padding: 5px 30px;" title="Plot numerical signals." onclick=\'plotSignals("'+ key + '")\'></button>').appendTo($row);
+                }
 
                 $('<td>').text(g_mapOfMessages[k].envelope.dataType).appendTo($row);
                 $('<td>').text(senderStamp).appendTo($row);
                 $('<td>').text(messageName).appendTo($row);
                 $('<td>').text(g_mapOfMessages[k].sampleTimeStamp).appendTo($row);
 
-                var msg = g_mapOfMessages[k].envelope[Object.keys(g_mapOfMessages[k].envelope)[5]];
                 var tmp = "";
                 var gnuplotDataEntry = "";
                 for (var j in msg) {
@@ -1268,6 +1278,12 @@ plot "opendlv_proxy_DistanceReading.0" using 1 title 'US front' with lines, \
             gnuplot_runScript();
         }
     }
+}
+
+function selectVideoStream(val) {
+    g_senderStampForImageReadingToShow = val;
+    // Activate tab for overview.
+    $('.nav-tabs a[href="#panel-feed"]').tab('show');
 }
 
 function plotSignals(val) {
