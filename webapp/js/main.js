@@ -268,7 +268,7 @@ function processEnvelope(incomingData) {
     }
 
     // opendlv_proxy_GeodeticWgs84Reading
-    if (19 == data.dataType) {
+    if ( (19 == data.dataType) && (0 == data.senderStamp) ) {
         var c = [data.opendlv_proxy_GeodeticWgs84Reading.longitude, data.opendlv_proxy_GeodeticWgs84Reading.latitude];
         g_map.setCenter(c);
         return;
@@ -363,7 +363,7 @@ function processEnvelope(incomingData) {
     }
 
     // opendlv_proxy_ImageReading
-    if ( (1055 == data.dataType) && (0 == data.senderStamp) ) {
+    if ( (1055 == data.dataType) && (g_senderStampForImageReadingToShow == data.senderStamp) ) {
         // Mapping function to make wide chars to regular bytes.
         strToAB = str =>
          new Uint8Array(str.split('')
