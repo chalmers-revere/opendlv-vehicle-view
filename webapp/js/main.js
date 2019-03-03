@@ -1050,7 +1050,7 @@ message opendlv.proxy.ActuationRequest [id = 160] {
         }
         console.log(remoteCommandJSON);
 
-        var output = g_libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remoteCommandJSON, 11 /* message identifier */, 0  /* sender stamp */);
+        var output = g_libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remoteCommandJSON, 11 /* message identifier */, 0 /* sender stamp */);
 
 //        strToAB = str =>
 //          new Uint8Array(str.split('')
