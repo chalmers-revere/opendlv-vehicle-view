@@ -152,7 +152,7 @@ function processEnvelope(incomingData) {
     g_envelopeCounter++;
 
     // Message overview.
-    if ( (data.dataType > 0) && (data.dataType != 9 /*Ignore PlayerCommand*/) && (data.dataType != 10 /*Ignore PlayerStatus*/) ) {
+    if ( (data.dataType > 0) && (data.dataType != 9 /*Ignore PlayerCommand*/) && (data.dataType != 10 /*Ignore PlayerStatus*/) && (data.dataType != 11 /*Ignore RecorderCommand*/) ) {
         // Do book keeping of envelopes.
         var currentTimeStamp = data.sampleTimeStamp.seconds * 1000 * 1000 + data.sampleTimeStamp.microseconds;
 
@@ -733,6 +733,10 @@ message cluon.data.PlayerStatus [id = 10] {
     uint32 currentEntryForPlayback [id = 3];
 }
 
+message cluon.data.RecorderCommand [id = 11] {
+    uint8 command [id = 1]; // 0 = nothing, 1 = record, 2 = stop
+}
+
 // This message is a legacy one to support controlling Snowfox and Rhino.
 message opendlv.proxy.ActuationRequest [id = 160] {
   float acceleration [id = 1];
@@ -1036,13 +1040,32 @@ message opendlv.proxy.ActuationRequest [id = 160] {
     ////////////////////////////////////////////////////////////////////////////
     $('body').on('click', 'button#record', function() {
         g_recording = !g_recording;
+
+        var remoteCommandJSON;
+        if (g_recording) {
+            remoteCommandJSON = "{\"command\":1}";
+        }
+        else {
+            remoteCommandJSON = "{\"command\":2}";
+        }
+        console.log(remoteCommandJSON);
+
+        var output = g_libcluon.encodeEnvelopeFromJSONWithoutTimeStamps(remoteCommandJSON, 11 /* message identifier */, 0  /* sender stamp */);
+
+//        strToAB = str =>
+//          new Uint8Array(str.split('')
+//            .map(c => c.charCodeAt(0))).buffer;
+
+//        // Instead of sending the raw bytes, we encapsulate them into a JSON object.
+//        ws.send(strToAB(output), { binary: true });
+
         if (g_recording) {
             $('button#record').css('color', '#D00');
-            g_ws.send("{ \"record\": true }", { binary: false });
+            g_ws.send("{ \"record\": true,\"remoterecord\":" + "\"" + window.btoa(output) + "\"" + "}", { binary: false });
         }
         else {
             $('button#record').css('color', '#555');
-            g_ws.send("{ \"record\": false }", { binary: false });
+            g_ws.send("{ \"record\": false,\"remoterecord\":" + "\"" + window.btoa(output) + "\"" + "}", { binary: false });
         }
     });
 
