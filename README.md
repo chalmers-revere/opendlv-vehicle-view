@@ -1,3 +1,5 @@
+Moved to https://git.opendlv.org.
+
 ## OpenDLV Microservice to view vehicle onboard data in your web-browser
 
 This repository provides source code to view selected vehicle onboard data like
